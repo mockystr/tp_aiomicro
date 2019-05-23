@@ -2,6 +2,7 @@ import asyncio
 import time
 from my_models import User, Man
 from utils import current_loop
+import datetime
 
 
 async def main():
@@ -11,25 +12,25 @@ async def main():
     # print(user.__dict__)
     # await user.save()
 
-    man = await User.objects.create(name='as\'d', description='perfect gamer. registered in 2010',
-                                    date_added=[2010, 12, 12], age=18,
-                                    coins=322, is_superuser=False)
-    print(man.__dict__)
-    await man.save()
-    man.date_added = {'year': 2012, 'month': 10, 'day': 5}
-    await man.save()
+    # man = await User.objects.create(name='as\'d', description='perfect gamer. registered in 2010',
+    #                                 date_added=[2010, 12, 12], age=18,
+    #                                 coins=322, is_superuser=False)
+    # print(man.__dict__)
+    # await man.save()
+    # man.date_added = {'year': 2012, 'month': 10, 'day': 5}
+    # await man.save()
 
     # man = Man(description='perfect gamer. registered in 2010',
     #           date_added=datetime.datetime.now(), age=18,
     #           coins=322, is_superuser=False,
     #           sex='male')
     # man.name = 'mockystr'
-    # man.save()
+    # await man.save()
     # man.date_added = None
-    # man.save()
+    # await man.save()
     # print(man.__dict__)
 
-    # print([i.age for i in User.objects.all()])
+    print([i.age async for i in await User.objects.all()])
 
     # users = User.objects.all()
     # print(users.__dict__)

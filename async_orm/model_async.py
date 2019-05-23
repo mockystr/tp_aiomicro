@@ -336,7 +336,7 @@ class QuerySet:
         print(' '.join([i.as_string(psycopg_conn) for i in query]))
 
         async with conn_pool.acquire() as con:
-            res_len = await con.fetchone(' '.join([i.as_string(psycopg_conn) for i in query]))[0]
+            res_len = await con.fetchrow(' '.join([i.as_string(psycopg_conn) for i in query]))[0]
             self.__cache['count'] = res_len
             return res_len
 
@@ -369,9 +369,10 @@ class QuerySet:
     def __str__(self):
         return '<QuerySet of {}>'.format(self.model_cls._table_name)
 
-    def __iter__(self):
+    async def __aiter__(self):
         if self.res is None:
-            current_loop.run_until_complete(self._build())
+            # current_loop.run_until_complete(self._build())
+            await self._build()
 
         return iter(self.res)
 
@@ -444,8 +445,8 @@ class Manage:
 
         print(insert_query.as_string(psycopg_conn))
         async with conn_pool.acquire() as con:
-            res = await con.fetchone(insert_query.as_string(psycopg_conn))
-            res = dict(zip([i.name for i in res[0].keys()], res))
+            res = await con.fetchrow(insert_query.as_string(psycopg_conn))
+            res = dict(zip([i for i in res.keys()], res))
             return self.model_cls(**res)
 
 
