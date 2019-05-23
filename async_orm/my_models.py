@@ -1,4 +1,4 @@
-from model import Model
+from model_async import Model
 from fields import (StringField, IntField, DateField,
                     FloatField, BooleanField)
 
