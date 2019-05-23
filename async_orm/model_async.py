@@ -228,7 +228,7 @@ class QuerySet:
         else:
             self.limit = key
 
-    def filter(self, *_, **kwargs):
+    async def filter(self, *_, **kwargs):
         """Get rows that are suitable for condition"""
         if kwargs:
             [Condition.check_fields(i, self.model_cls) for i in kwargs.items()]
@@ -239,17 +239,17 @@ class QuerySet:
             self.where = kwargs
         return self
 
-    def __getitem__(self, key):
+    async def __getitem__(self, key):
         if isinstance(key, int):
             self.limit = key
-            return self._build()
+            return await self._build()
         elif isinstance(key, slice):
             self.slice_processing(key)
             return self
         else:
             raise TypeError('wrong index')
 
-    def order_by(self, *args):
+    async def order_by(self, *args):
         if isinstance(args, (tuple, list)):
             stripped_order = [i.strip('-') for i in args]
             if not set(stripped_order).issubset(self.fields.keys()):
@@ -268,7 +268,7 @@ class QuerySet:
             self._order_by = args
         return self
 
-    def reverse(self):
+    async def reverse(self):
         if self.res is not None:
             if isinstance(self.res, list):
                 self.res.reverse()
@@ -313,10 +313,10 @@ class QuerySet:
         async with conn_pool.acquire() as con:
             return await con.execute(' '.join([i.as_string(psycopg_conn) for i in query]))
 
-    def count(self):
+    async def count(self):
         if 'count' in self.__cache.keys() and self.__cache['count'] != -1:
             return self.__cache['count']
-        return current_loop.run_until_complete(self._count_perform())
+        return await self._count_perform()
 
     async def _count_perform(self):
         if self.res is not None:
@@ -336,7 +336,7 @@ class QuerySet:
         print(' '.join([i.as_string(psycopg_conn) for i in query]))
 
         async with conn_pool.acquire() as con:
-            res_len = await con.fetchrow(' '.join([i.as_string(psycopg_conn) for i in query]))[0]
+            res_len = (await con.fetchrow(' '.join([i.as_string(psycopg_conn) for i in query])))[0]
             self.__cache['count'] = res_len
             return res_len
 
@@ -354,27 +354,32 @@ class QuerySet:
         if self.limit:
             query.extend(self.format_limit())
 
-        # print('BUILD QUERY', query)
         print(' '.join([i.as_string(psycopg_conn) for i in query]))
 
         async with conn_pool.acquire() as con:
-            res = await con.fetchall(' '.join([i.as_string(psycopg_conn) for i in query]))
+            res = await con.fetch(' '.join([i.as_string(psycopg_conn) for i in query]))
 
             if isinstance(self.limit, int):
-                return self.model_cls(**dict(zip([i.name for i in con[0].keys()], res[0])))
+                return self.model_cls(**dict(zip([i for i in res[0].keys()], res[0])))
 
-            self.res = [self.model_cls(**dict(zip([ii.name for ii in con[0].keys()], res[i]))) for i in
+            self.res = [self.model_cls(**dict(zip([ii for ii in res[0].keys()], res[i]))) for i in
                         range(len(res))]
 
     def __str__(self):
         return '<QuerySet of {}>'.format(self.model_cls._table_name)
 
-    async def __aiter__(self):
-        if self.res is None:
-            # current_loop.run_until_complete(self._build())
-            await self._build()
+    def __aiter__(self):
+        return self
 
-        return iter(self.res)
+    async def __anext__(self):
+        if self.res is None:
+            await self._build()
+            self.res_iter = iter(self.res)
+
+        try:
+            return next(self.res_iter)
+        except StopIteration:
+            raise StopAsyncIteration()
 
 
 class Manage:
