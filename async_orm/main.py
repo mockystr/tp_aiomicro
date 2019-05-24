@@ -49,9 +49,9 @@ async def main():
     #        await (await (await (await User.objects.all()).filter(name__startswith='e'))[:20])
     #       .order_by('-name', 'description')])
 
-    # res = await (await (await User.objects.all()).order_by('-name')).filter(name__startswith='a')
+    res = await (await (await User.objects.all()).order_by('-name')).filter(name__startswith='a')
     # print([i async for i in res])
-    # print(await res[5])
+    print(await res[5])
 
     # user_obj = await User.objects.get(name='new_edit_after_get', id=2538)
     # print(user_obj.__dict__)

@@ -239,7 +239,7 @@ class QuerySet:
             self.where = kwargs
         return self
 
-    async def __getitem__(self, key):
+    async def async_getitem(self, key):
         if isinstance(key, int):
             self.limit = key
             return await self._build()
@@ -248,6 +248,9 @@ class QuerySet:
             return self
         else:
             raise TypeError('wrong index')
+
+    def __getitem__(self, key):
+        return self.async_getitem(key)
 
     async def order_by(self, *args):
         if isinstance(args, (tuple, list)):
