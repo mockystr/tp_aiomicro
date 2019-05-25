@@ -1,0 +1,2 @@
+sharable_secret = 'secret'
+

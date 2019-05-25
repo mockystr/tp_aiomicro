@@ -1,11 +1,15 @@
 import asyncio
 import time
-from my_models import User, Man
-from utils import current_loop
+# from my_models import User, Man
+# from utils import current_loop
 import datetime
 
 
 async def main():
+    pass
+    # res = await Man.objects.all().filter()
+    # print(res)
+
     # user = await Man.objects.get(id=28)
     # print(user.__dict__)
     # user.name = 'asd12'
@@ -35,8 +39,11 @@ async def main():
     # users = await User.objects.all()
     # print(users.__dict__)
 
+    r = await User.objects.all()
+    print(await r.filter())
+
     # print([(i.id, i.name, i.age, i.coins) async for i in
-    #        await (await (await User.objects.filter())[:10]).order_by('-age')])
+    #        await (User.objects.filter()[:10].order_by('-age'))])
 
     # [print('', (i.name, i.age, i.coins)) async for i in
     #  await (await User.objects.filter(name='abe')).order_by('-coins', 'age')]
@@ -49,9 +56,9 @@ async def main():
     #        await (await (await (await User.objects.all()).filter(name__startswith='e'))[:20])
     #       .order_by('-name', 'description')])
 
-    res = await (await (await User.objects.all()).order_by('-name')).filter(name__startswith='a')
+    # res = await (await (await User.objects.all()).order_by('-name')).filter(name__startswith='a')
     # print([i async for i in res])
-    print(await res[5])
+    # print(res[5])
 
     # user_obj = await User.objects.get(name='new_edit_after_get', id=2538)
     # print(user_obj.__dict__)
@@ -125,4 +132,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    current_loop.run_until_complete(main())
+    pass
