@@ -12,35 +12,12 @@ from .exceptions import UserExists, ExpiredToken
 from ..async_orm.exceptions import DoesNotExist
 from ..aioauth.interface import AuthMS
 
+auth_ms = AuthMS()
+
 
 async def singup(request):
-    try:
-        data = await request.json()
-
-        if await (await User.objects.filter(email=data['email'])).count():
-            raise UserExists()
-
-        if not validate_email(data['email']):
-            raise ValueError("Wrong email")
-
-        if len(data['password']) <= 4:
-            raise ValueError("Password must be more than 4 characters.")
-
-        now = datetime.datetime.now()
-        user = await User.objects.create(email=data['email'],
-                                         password=get_hashed_password(data['password'].encode()).decode('utf-8'),
-                                         name=data.get('name'), created_date=now, last_login_date=now)
-
-        return await json_response({'status': 'ok', 'data': await set_token(user)})
-    except KeyError:
-        return await json_response({'status': 'error', 'error_text': 'You must enter email and password',
-                                    'data': {}})
-    except UserExists as e:
-        return await json_response({'status': 'error', 'error_text': str(e),
-                                    'data': {}})
-    except ValueError as e:
-        return await json_response({'status': 'error', 'error_text': str(e),
-                                    'data': {}})
+    data = await request.json()
+    return await json_response(await auth_ms.make_request(request_type='singup', data=data, timeout=5))
 
 
 async def login(request):
@@ -56,7 +33,7 @@ async def login(request):
         return await json_response({'status': 'ok', 'data': await set_token(user)})
     except DoesNotExist as e:
         return await json_response({'status': 'error', 'error_text': str(e)})
-    except (KeyError, ValueError) as e:
+    except (KeyError, ValueError):
         return await json_response({'status': 'error', 'error_text': 'Wrong credentials'})
 
 
@@ -91,9 +68,7 @@ async def process_token(request):
 
 
 async def current_user(request):
-    auth = AuthMS()
-
-    await auth.make_request('current_user', {'id': 1})
+    await auth_ms.make_request('current_user', {'id': 1})
 
     try:
         try:
