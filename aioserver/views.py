@@ -25,6 +25,11 @@ async def current_user(request):
 
 
 async def index(request):
+    data = {'token': request.headers.get('authorization').split(' ')[1]}
+    validate_response = await auth_ms.make_request('validate', data=data, timeout=5)
+    if validate_response['status'] != 'ok':
+        return await json_response(validate_response)
+
     data = await request.json()
     data.update({'email': request['user']['email']})
     print('from views data', data)

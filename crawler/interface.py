@@ -38,6 +38,6 @@ class CrawlerMS:
                 aio_pika.Message(body=message_body),
                 routing_key=queue_name)
 
-            return {'status': 'ok', 'data': await cs.to_dict()}
+            return {'status': 'ok', 'data': {'id': cs.id, 'domain': cs.domain, 'https': cs.https, 'time': str(cs.time)}}
         except (ValueError, KeyError):
             return {'status': 'error', 'error_text': 'Wrong credentials were given to crawler'}

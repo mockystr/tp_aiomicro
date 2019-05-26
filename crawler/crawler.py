@@ -59,7 +59,6 @@ class Crawler:
             return created
 
     async def main(self):
-        crawler_t0 = time()
         async with Elasticsearch([{'host': 'localhost', 'port': 9200}]) as es:
             if not await self.initialize_index(es):
                 return None
@@ -70,39 +69,43 @@ class Crawler:
                 async with asyncpool.AsyncPool(self.loop, num_workers=10,
                                                name="CrawlerPool", logger=logging.getLogger("CrawlerPool"),
                                                worker_co=self.worker) as pool:
+                    t_begin = time()
                     link = await self.links.get()
                     await pool.push(link, es, session)
+                    self.time_statistic.append(time() - t_begin)
 
                     while True:
+                        time_for_link = time()
                         if not self.links.empty():
                             link = await self.links.get()
                         else:
-                            await asyncio.sleep(0.5)
+                            wait_time = time()
+                            while self.links.empty() and self.tmp_id < self.max_count:
+                                await asyncio.sleep(0.1)
+                                if time() - wait_time > 5:
+                                    break
+
                             if self.links.empty():
-                                crawler_t1 = time()
                                 break
 
                             link = await self.links.get()
-
                         await asyncio.sleep(self.sleep_time)
                         await pool.push(link=link, es=es, session=session)
-
+                        self.time_statistic.append(time() - time_for_link)
+        # print(len(self.time_statistic))
+        # print('sum stat', sum(self.time_statistic))
         return {'pages': self.tmp_id,
-                'avg_time_per_page': (crawler_t1 - crawler_t0) / self.tmp_id,
+                'avg_time_per_page': sum(self.time_statistic) / self.tmp_id,
                 'max_time_per_page': max(self.time_statistic),
                 'min_time_per_page': min(self.time_statistic)}
 
     async def worker(self, link, es, session):
-        link_t0 = time()
         async with session.get(link) as resp:
             if self.tmp_id >= self.max_count:
                 return
 
-            # print(self.domain, link)
-
             new_links, soup = await self.get_links(await resp.text())
             self.set_links.add(link)
-            # print('new links for {}'.format(self.domain), new_links)
             self.tmp_id += 1
             for n in new_links:
                 if n not in self.set_links:
@@ -114,7 +117,6 @@ class Crawler:
                             id=self.tmp_id,
                             body={'text': await self.clean_text(soup), 'url': link})
 
-        self.time_statistic.append(time() - link_t0)
 
     @staticmethod
     async def clean_text(soup):

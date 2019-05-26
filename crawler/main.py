@@ -12,11 +12,14 @@ async def index_consumer(message: IncomingMessage):
     print(body)
 
     url = await collect_url(body['data']['https'], body['data']['domain'])
-    r = await Crawler(start_url=url, rps=RPS, max_count=300, loop=current_loop).main()
+    r = await Crawler(start_url=url, rps=RPS, max_count=50, loop=current_loop).main()
+    if r is None:
+        print('ERROR')
+        return
     print('return form crawler', r)
 
-    cs = CrawlerStats.objects.get(domain=body['data']['domain'])
-    cs.pages = r['pages']
+    cs = await CrawlerStats.objects.get(domain=body['data']['domain'])
+    cs.pages_count = r['pages']
     cs.avg_time_per_page = r['avg_time_per_page']
     cs.max_time_per_page = r['max_time_per_page']
     cs.min_time_per_page = r['min_time_per_page']
