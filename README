@@ -1,0 +1,2 @@
+python -m tp_aiomicro.aioserver.server
+python -m tp_aiomicro.async_orm.main

@@ -6,10 +6,11 @@ from aioelasticsearch.helpers import Scan
 from validate_email import validate_email
 
 from ..async_orm.models import User, Token, CrawlerStats
-from .utils import dsn, json_response
+from .utils import dsn, json_response, get_hashed_password, check_password
 from .settings import index_name, sharable_secret, TOKEN_EXPIRE_MINUTES
 from .exceptions import UserExists, ExpiredToken
 from ..async_orm.exceptions import DoesNotExist
+from ..aioauth.interface import AuthMS
 
 
 async def singup(request):
@@ -26,7 +27,7 @@ async def singup(request):
             raise ValueError("Password must be more than 4 characters.")
 
         now = datetime.datetime.now()
-        user = await User.objects.create(email=data['email'], password=data['password'],
+        user = await User.objects.create(email=data['email'], password=get_hashed_password(data['password']),
                                          name=data.get('name'), created_date=now, last_login_date=now)
 
         return await json_response({'status': 'ok', 'data': await set_token(user)})
@@ -45,10 +46,16 @@ async def login(request):
     try:
         data = await request.json()
         user = await User.objects.get(email=data['email'])
+
+        if not check_password(data['password'], user.password):
+            raise ValueError
+
         user.last_login_date = datetime.datetime.now()
         await user.save()
         return await json_response({'status': 'ok', 'data': await set_token(user)})
     except DoesNotExist as e:
+        return await json_response({'status': 'error', 'error_text': str(e)})
+    except (KeyError, ValueError) as e:
         return await json_response({'status': 'error', 'error_text': str(e)})
 
 
