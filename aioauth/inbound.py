@@ -2,6 +2,7 @@ import asyncio
 import pickle
 import jwt
 import datetime
+import time
 import aio_pika
 from validate_email import validate_email
 from .utils import inbound_name, outbound_name, check_password, get_hashed_password
@@ -71,7 +72,7 @@ async def set_token(user):
 async def validate(data):
     try:
         try:
-            token_data = await process_token(**data)
+            token_data = await process_token(data['token'])
         except (DoesNotExist, ValueError):
             return {'status': 'error', 'error_text': 'Wrong token is given'}
 
@@ -85,10 +86,9 @@ async def validate(data):
         return {'status': 'error', 'error_text': str(e)}
 
 
-async def process_token(email, token):
+async def process_token(token):
     decoded_data = jwt.decode(token, sharable_secret)
-    token_user = await User.objects.get(email=email)
-    token_obj = await Token.objects.get(user_id=token_user.id)
+    token_obj = await Token.objects.get(token=token)
 
     if token_obj.token != token:
         raise ValueError
@@ -111,7 +111,6 @@ async def main(loop):
             async for message in queue_iter:
                 async with message.process():
                     body = pickle.loads(message.body)
-                    print('body', body)
 
                     if body['type'] in methods_dict:
                         r = await methods_dict[body['type']](body['data'])

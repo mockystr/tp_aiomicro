@@ -1,2 +1,6 @@
 python -m tp_aiomicro.aioserver.server
 python -m tp_aiomicro.async_orm.main
+python -m tp_aiomicro.crawler.main
+python -m tp_aiomicro.aioauth.inbound
+
+** aiomicro is your root directory

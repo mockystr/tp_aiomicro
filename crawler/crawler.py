@@ -1,13 +1,12 @@
+import logging
 import asyncio
 import aiohttp
-from bs4 import BeautifulSoup
-from settings import RPS, START_URL
-from urllib.parse import urljoin, urlparse, urldefrag
-from pprint import pprint
-from aioelasticsearch import Elasticsearch
-from time import time
-import logging
 import asyncpool
+from time import time
+from urllib.parse import urljoin, urlparse, urldefrag
+from aioelasticsearch import Elasticsearch
+from bs4 import BeautifulSoup
+from .settings import RPS, START_URL
 
 
 class Crawler:

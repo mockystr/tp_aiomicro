@@ -5,3 +5,4 @@ index_name = 'httpsite-of-thrones.ru'
 # START_URL = 'https://friends-online.me/'
 # START_URL = 'https://getbootstrap.com/'
 START_URL = 'http://site-of-thrones.ru/'
+TIME_REFRESH_MINUTES = 20

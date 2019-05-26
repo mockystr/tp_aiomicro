@@ -1,10 +1,6 @@
 import bcrypt
-import datetime
 import json
-import jwt
 from aiohttp import web
-from .settings import sharable_secret
-from .exceptions import ExpiredToken
 
 
 async def json_response(data):

@@ -51,9 +51,9 @@ CREATE TABLE "token" (
 
 
 class CrawlerStats(Model):
-    domain = StringField()
-    author_id = IntField()
-    https = IntField()
+    domain = StringField(required=True)
+    author_id = IntField(required=True)
+    https = IntField(required=True)
     time = DateField()
     pages_count = IntField()
     avg_time_per_page = FloatField()
@@ -70,9 +70,9 @@ CREATE TABLE "crawler_stats" (
 "domain" VARCHAR(255) NOT NULL,
 "author_id" INTEGER REFERENCES "user" ("id"),
 "https" INTEGER NOT NULL,
-"time" TIMESTAMP NOT NULL,
-"pages_count" INTEGER NOT NULL,
-"avg_time_per_page" FLOAT NOT NULL,
-"max_time_per_page" FLOAT NOT NULL,
-"min_time_per_page" FLOAT NOT NULL);
+"time" TIMESTAMP,
+"pages_count" INTEGER,
+"avg_time_per_page" FLOAT,
+"max_time_per_page" FLOAT,
+"min_time_per_page" FLOAT);
 """
