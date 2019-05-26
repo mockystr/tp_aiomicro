@@ -1,5 +1,6 @@
 import bcrypt
 import json
+from urllib.parse import urlparse
 from aiohttp import web
 
 
@@ -13,6 +14,10 @@ def get_hashed_password(plain_text_password):
 
 def check_password(plain_text_password, hashed_password):
     return bcrypt.checkpw(plain_text_password, hashed_password)
+
+
+async def get_domain(url):
+    return '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url))
 
 
 dsn = "dbname={} user={} password={} host= {}".format('asynctest',

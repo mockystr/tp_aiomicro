@@ -15,6 +15,7 @@ class Crawler:
         self.domain = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(self.start_url))
         self.index_name = ''.join([i for i in self.start_url
                                    if i not in ('[', '"', '*', '\\\\', '\\', '<', '|', ',', '>', '/', '?', ':')])
+        print(self.index_name)
         self.loop = loop
         self.rps = rps
         self.max_count = max_count
@@ -48,7 +49,6 @@ class Crawler:
 
         try:
             if await es.indices.exists(self.index_name):
-                print('deleting')
                 await es.indices.delete(self.index_name)
 
             await es.indices.create(index=self.index_name, ignore=400, body=settings)
@@ -82,7 +82,9 @@ class Crawler:
                             wait_time = time()
                             while self.links.empty() and self.tmp_id < self.max_count:
                                 await asyncio.sleep(0.1)
+
                                 if time() - wait_time > 5:
+                                    print('break')
                                     break
 
                             if self.links.empty():
@@ -103,7 +105,7 @@ class Crawler:
         async with session.get(link) as resp:
             if self.tmp_id >= self.max_count:
                 return
-
+            print(link)
             new_links, soup = await self.get_links(await resp.text())
             self.set_links.add(link)
             self.tmp_id += 1

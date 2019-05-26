@@ -1,4 +1,4 @@
-from .views import singup, login, current_user, index, stat
+from .views import singup, login, current_user, index, stat, search
 
 
 def setup_routes(app):
@@ -8,6 +8,6 @@ def setup_routes(app):
     app.router.add_get('/current', current_user, name='current_user')
 
     # crawler urls
-    # app.router.add_get('/search', search, name='search')
+    app.router.add_get('/search', search, name='search')
     app.router.add_post('/index', index, name='index')
     app.router.add_get('/stat', stat, name='stat')

@@ -9,14 +9,13 @@ from ..async_orm.models import CrawlerStats
 
 async def index_consumer(message: IncomingMessage):
     body = pickle.loads(message.body)
-    print(body)
 
     url = await collect_url(body['data']['https'], body['data']['domain'])
     r = await Crawler(start_url=url, rps=RPS, max_count=50, loop=current_loop).main()
+
     if r is None:
         print('ERROR')
         return
-    print('return form crawler', r)
 
     cs = await CrawlerStats.objects.get(domain=body['data']['domain'])
     cs.pages_count = r['pages']
