@@ -27,4 +27,5 @@ async def current_user(request):
 async def index(request):
     data = await request.json()
     data.update({'email': request['user']['email']})
+    print('from views data', data)
     return await json_response(await crawler_ms.make_nowait_request('index', data))

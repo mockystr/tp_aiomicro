@@ -12,3 +12,7 @@ async def set_connection(loop):
     await ch.set_qos(prefetch_count=1)
     q = await ch.declare_queue(queue_name)
     return conn, ch, q
+
+
+async def collect_url(https, domain):
+    return "{}://{}".format('https' if https == 1 else 'http', domain)

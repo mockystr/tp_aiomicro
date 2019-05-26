@@ -31,7 +31,7 @@ class CrawlerMS:
                             'error_text': 'You need to wait {:0.1f} minutes for update index'.format(wait_time)}
             except DoesNotExist:
                 cs = await CrawlerStats.objects.create(domain=data['domain'], author_id=author.id,
-                                                       https=int(data['https']),
+                                                       https=data['https'],
                                                        time=datetime.datetime.now())
 
             await channel.default_exchange.publish(

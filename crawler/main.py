@@ -3,15 +3,26 @@ import pickle
 from aio_pika import connect, IncomingMessage
 from .settings import RPS, START_URL
 from .crawler import Crawler
+from .utils import collect_url, current_loop
+from ..async_orm.models import CrawlerStats
 
 
-async def crawler_consumer(message: IncomingMessage):
-    body = pickle.dumps(message.body)
+async def index_consumer(message: IncomingMessage):
+    body = pickle.loads(message.body)
     print(body)
-    print("Message body is: %r" % message.body)
-    print("Before sleep!")
-    await asyncio.sleep(5)  # Represents async I/O operations
-    print("After sleep!")
+
+    url = await collect_url(body['data']['https'], body['data']['domain'])
+    r = await Crawler(start_url=url, rps=RPS, max_count=300, loop=current_loop).main()
+    print('return form crawler', r)
+
+    cs = CrawlerStats.objects.get(domain=body['data']['domain'])
+    cs.pages = r['pages']
+    cs.avg_time_per_page = r['avg_time_per_page']
+    cs.max_time_per_page = r['max_time_per_page']
+    cs.min_time_per_page = r['min_time_per_page']
+    await cs.save()
+
+    message.ack()
 
 
 async def main(loop):
@@ -19,7 +30,7 @@ async def main(loop):
     channel = await connection.channel()
     queue = await channel.declare_queue('crawler_inbound')
 
-    await queue.consume(crawler_consumer, no_ack=True)
+    await queue.consume(index_consumer, no_ack=False)
 
 
 if __name__ == "__main__":
