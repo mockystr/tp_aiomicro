@@ -2,20 +2,21 @@ import asyncio
 import asyncpg
 import psycopg2
 from psycopg2 import sql
-from utils import current_loop
-from fields import Field
-from exceptions import (MultipleObjectsReturned,
-                        DoesNotExist,
-                        DeleteError,
-                        OrderByFieldError,
-                        IntegrityError,
-                        ParentClashError,
-                        FieldLookupError)
-from db_settings import (user_db_constant,
-                         password_db_constant,
-                         host_db_constant,
-                         database_db_constant,
-                         port_db_constant)
+from .utils import current_loop
+from .fields import Field
+from .fields import DateField
+from .exceptions import (MultipleObjectsReturned,
+                         DoesNotExist,
+                         DeleteError,
+                         OrderByFieldError,
+                         IntegrityError,
+                         ParentClashError,
+                         FieldLookupError)
+from .db_settings import (user_db_constant,
+                          password_db_constant,
+                          host_db_constant,
+                          database_db_constant,
+                          port_db_constant)
 
 
 async def create_conn_cur():
@@ -88,7 +89,6 @@ class Condition:
     def check_fields(cond, owner_class):
         # print(cond)
         condspl = cond[0].split('__')
-
         if condspl[0] not in ['id', *owner_class._fields.keys()]:
             raise LookupError("Cannot resolve keyword '{}' into field. Choices are: {}".
                               format(condspl[0], ', '.join(owner_class._fields.keys())))
@@ -113,11 +113,7 @@ class Condition:
                 return sql.SQL("{}={}").format(sql.Identifier(self.field_name),
                                                sql.Literal(str(self.value))).as_string(psycopg_conn)
             elif self.cond == 'in':
-                print(self.value)
-                print(tuple(self.value))
-                # print([sql.Literal(i) for i in self.value])
                 tmp_compose = sql.Composed(sql.SQL(', ').join([sql.Literal(i) for i in tuple(self.value)]))
-                print(tmp_compose)
                 return sql.SQL("{} IN ({})").format(sql.Identifier(self.field_name),
                                                     tmp_compose).as_string(psycopg_conn)
             elif self.cond == 'lt':
@@ -394,8 +390,7 @@ class Manage:
         self.model_cls = None
 
     def __get__(self, instance, owner):
-        if self.model_cls is None:
-            self.model_cls = owner
+        self.model_cls = owner
         return self
 
     async def all(self):
@@ -471,7 +466,11 @@ class Model(metaclass=ModelMeta):
 
     objects = Manage()
 
-    def check_fields(self):
+    async def to_dict(self):
+        return {field_name: getattr(self, field_name) if type(field) != DateField else str(getattr(self, field_name))
+                for field_name, field in self._fields.items()}
+
+    async def check_fields(self):
         """Return exception if required field is none"""
         for field_name, field in self._fields.items():
             if (getattr(self, field_name) is None or getattr(self, field_name) == "None") and field.required:
@@ -501,7 +500,7 @@ class Model(metaclass=ModelMeta):
             setattr(self, field_name, value)
 
         object_fields = ['id', *list(self._fields.keys())]
-        self.check_fields()
+        await self.check_fields()
 
         if self.__dict__.get('id') is not None:
             set_arr = []

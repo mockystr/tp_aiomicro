@@ -1,5 +1,5 @@
-from model_async import Model
-from fields import (StringField, IntField, DateField,
+from .model import Model
+from .fields import (StringField, IntField, DateField,
                     FloatField, BooleanField)
 
 
@@ -11,10 +11,10 @@ class User(Model):
     last_login_date = DateField()
 
     def __str__(self):
-        return 'User {}'.format(self.name, self.age)
+        return 'User {}'.format(self.email, self.name)
 
     def __repr__(self):
-        return '<User {}>'.format(self.name, self.age)
+        return '<User {}>'.format(self.email, self.name)
 
     class Meta:
         table_name = 'user'
@@ -26,6 +26,7 @@ CREATE TABLE "user" (
 "id" BIGSERIAL PRIMARY KEY,
 "email" VARCHAR(100) NOT NULL,
 "password" VARCHAR(100) NOT NULL,
+"name" VARCHAR(100),
 "created_date" TIMESTAMP DEFAULT NULL,
 "last_login_date" TIMESTAMP DEFAULT NULL);
 """
@@ -43,8 +44,9 @@ class Token(Model):
 token_sql = """
 CREATE TABLE "token" (
 "id" BIGSERIAL PRIMARY KEY,
-"user_id" INTEGER REFERENCES "user" ("id"),
-expire_date TIMESTAMP);
+"token" TEXT NOT NULL,
+"user_id" INTEGER REFERENCES "user" ("id") ON DELETE CASCADE NOT NULL,
+"expire_date" TIMESTAMP NOT NULL);
 """
 
 

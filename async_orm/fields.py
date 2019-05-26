@@ -1,5 +1,5 @@
 import datetime
-from exceptions import IntegrityError
+from .exceptions import IntegrityError
 
 
 class Field:

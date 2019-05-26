@@ -1,22 +1,97 @@
-from aiohttp import web
-from utils import dsn, json_response
-from pprint import pprint
-from aioelasticsearch import Elasticsearch
-from settings import index_name
-from aioelasticsearch.helpers import Scan
-from async_orm.models import User
 import datetime
+import jwt
+
+from aioelasticsearch import Elasticsearch
+from aioelasticsearch.helpers import Scan
+from validate_email import validate_email
+
+from ..async_orm.models import User, Token, CrawlerStats
+from .utils import dsn, json_response
+from .settings import index_name, sharable_secret, TOKEN_EXPIRE_MINUTES
+from .exceptions import UserExists, ExpiredToken
+from ..async_orm.exceptions import DoesNotExist
 
 
 async def singup(request):
     try:
-        await User.objects.create(email=request.query['email'], password=request.query['password'],
-                                  name=request.query.get('name'), created_date=datetime.datetime.now())
-        return await json_response({'status': 'ok', 'data': {}})
+        data = await request.json()
+
+        if await (await User.objects.filter(email=data['email'])).count():
+            raise UserExists()
+
+        if not validate_email(data['email']):
+            raise ValueError("Wrong email")
+
+        if len(data['password']) <= 4:
+            raise ValueError("Password must be more than 4 characters.")
+
+        now = datetime.datetime.now()
+        user = await User.objects.create(email=data['email'], password=data['password'],
+                                         name=data.get('name'), created_date=now, last_login_date=now)
+
+        return await json_response({'status': 'ok', 'data': await set_token(user)})
     except KeyError:
-        return await json_response({'status': 'error', 'error_text': 'You must write email and password'})
-    except:
-        return await json_response({'status': 'error', 'error_text': 'Something went wrong'})
+        return await json_response({'status': 'error', 'error_text': 'You must enter email and password',
+                                    'data': {}})
+    except UserExists as e:
+        return await json_response({'status': 'error', 'error_text': str(e),
+                                    'data': {}})
+    except ValueError as e:
+        return await json_response({'status': 'error', 'error_text': str(e),
+                                    'data': {}})
+
+
+async def login(request):
+    try:
+        data = await request.json()
+        user = await User.objects.get(email=data['email'])
+        user.last_login_date = datetime.datetime.now()
+        await user.save()
+        return await json_response({'status': 'ok', 'data': await set_token(user)})
+    except DoesNotExist as e:
+        return await json_response({'status': 'error', 'error_text': str(e)})
+
+
+async def set_token(user):
+    expire = datetime.datetime.now() + datetime.timedelta(minutes=TOKEN_EXPIRE_MINUTES)
+    token = jwt.encode({'email': user.email, 'password': user.password, 'expire_date': str(expire)},
+                       key=sharable_secret).decode('utf-8')
+
+    try:
+        token_obj = await Token.objects.get(user_id=user.id)
+        token_obj.token, token_obj.user_id, token_obj.expire_date = token, user.id, expire
+        await token_obj.save()
+    except DoesNotExist:
+        await Token.objects.create(token=token,
+                                   user_id=user.id,
+                                   expire_date=expire)
+    return {'token': token, 'expire': str(expire)}
+
+
+async def process_token(request):
+    token = request.headers.get('authorization')
+    decoded_data = jwt.decode(token.split(' ')[1], sharable_secret)
+    print('request user', request['user'])
+    # try:
+    #     token_obj = await Token.objects.get(token=token)
+    # except DoesNotExist:
+    #     pass
+
+    expire_obj = datetime.datetime.strptime(decoded_data['expire_date'], '%Y-%m-%d %H:%M:%S.%f')
+
+    return {'expired': expire_obj < datetime.datetime.now(), 'decoded_data': decoded_data}
+
+
+async def current_user(request):
+    try:
+        token_data = await process_token(request)
+        if token_data['expired'] is True:
+            raise ExpiredToken
+
+        user = await User.objects.get(email=token_data['decoded_data']['email'])
+        return await json_response({'status': 'ok', 'data': await user.to_dict()})
+    except ExpiredToken as e:
+        return await json_response({'status': 'error', 'error_text': str(e)})
 
 
 async def index(request):

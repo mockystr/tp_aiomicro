@@ -1,12 +1,14 @@
 import asyncio
 import time
-# from my_models import User, Man
-# from utils import current_loop
+from .models import User, Token
+from .utils import current_loop
 import datetime
 
 
 async def main():
-    pass
+    print(await User.objects.get(email='2@mail.ru'))
+    print(await Token.objects.filter(token='asdasd'))
+    # print(await User.objects.create(email='1', password='12', name='as'))
     # res = await Man.objects.all().filter()
     # print(res)
 
@@ -38,9 +40,6 @@ async def main():
 
     # users = await User.objects.all()
     # print(users.__dict__)
-
-    r = await User.objects.all()
-    print(await r.filter())
 
     # print([(i.id, i.name, i.age, i.coins) async for i in
     #        await (User.objects.filter()[:10].order_by('-age'))])
@@ -132,4 +131,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    pass
+    current_loop.run_until_complete(main())
