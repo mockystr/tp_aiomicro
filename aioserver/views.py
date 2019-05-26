@@ -21,73 +21,13 @@ async def singup(request):
 
 
 async def login(request):
-    try:
-        data = await request.json()
-        user = await User.objects.get(email=data['email'])
-
-        if not check_password(data['password'].encode(), user.password.encode()):
-            raise ValueError
-
-        user.last_login_date = datetime.datetime.now()
-        await user.save()
-        return await json_response({'status': 'ok', 'data': await set_token(user)})
-    except DoesNotExist as e:
-        return await json_response({'status': 'error', 'error_text': str(e)})
-    except (KeyError, ValueError):
-        return await json_response({'status': 'error', 'error_text': 'Wrong credentials'})
-
-
-async def set_token(user):
-    expire = datetime.datetime.now() + datetime.timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    token = jwt.encode({'email': user.email, 'password': user.password, 'expire_date': str(expire)},
-                       key=sharable_secret).decode('utf-8')
-
-    try:
-        token_obj = await Token.objects.get(user_id=user.id)
-        token_obj.token, token_obj.user_id, token_obj.expire_date = token, user.id, expire
-        await token_obj.save()
-    except DoesNotExist:
-        await Token.objects.create(token=token,
-                                   user_id=user.id,
-                                   expire_date=expire)
-    return {'token': token, 'expire': str(expire)}
-
-
-async def process_token(request):
-    token = request.headers.get('authorization').split(' ')[1]
-    decoded_data = jwt.decode(token, sharable_secret)
-    token_user = await User.objects.get(email=request['user']['email'])
-    token_obj = await Token.objects.get(user_id=token_user.id)
-
-    if token_obj.token != token:
-        raise ValueError
-
-    expire_obj = datetime.datetime.strptime(decoded_data['expire_date'], '%Y-%m-%d %H:%M:%S.%f')
-
-    return {'expired': expire_obj < datetime.datetime.now(), 'decoded_data': decoded_data}
+    data = await request.json()
+    return await json_response(await auth_ms.make_request(request_type='login', data=data, timeout=5))
 
 
 async def current_user(request):
-    await auth_ms.make_request('current_user', {'id': 1})
-
-    try:
-        try:
-            token_data = await process_token(request)
-        except (DoesNotExist, ValueError):
-            return await json_response({'status': 'error', 'error_text': 'Wrong token is given'})
-
-        if token_data['expired'] is True:
-            raise ExpiredToken
-
-        user = await User.objects.get(email=token_data['decoded_data']['email'])
-        return await json_response({'status': 'ok', 'data': await user.to_dict()})
-    except ExpiredToken as e:
-        return await json_response({'status': 'error', 'error_text': str(e)})
-
-
-async def index(request):
-    r = {'status': 'success', 'text': 'Hello, im index handler'}
-    return await json_response(r)
+    data = {'email': request['user']['email'], 'token': request.headers.get('authorization').split(' ')[1]}
+    return await json_response(await auth_ms.make_request('validate', data=data, timeout=5))
 
 
 async def search(request):

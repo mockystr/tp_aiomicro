@@ -8,7 +8,6 @@ from .utils import inbound_name, outbound_name, check_password, get_hashed_passw
 from ..async_orm.models import User, Token, CrawlerStats
 from ..aioserver.exceptions import UserExists, ExpiredToken
 from ..async_orm.exceptions import DoesNotExist
-from ..aioserver.utils import json_response
 from ..aioserver.settings import TOKEN_EXPIRE_MINUTES, sharable_secret
 
 
@@ -37,12 +36,20 @@ async def singup(data):
         return {'status': 'error', 'error_text': str(e), 'data': {}}
 
 
-async def login():
-    pass
+async def login(data):
+    try:
+        user = await User.objects.get(email=data['email'])
 
+        if not check_password(data['password'].encode(), user.password.encode()):
+            raise ValueError
 
-async def validate():
-    pass
+        user.last_login_date = datetime.datetime.now()
+        await user.save()
+        return {'status': 'ok', 'data': await set_token(user)}
+    except DoesNotExist as e:
+        return {'status': 'error', 'error_text': str(e)}
+    except (KeyError, ValueError):
+        return {'status': 'error', 'error_text': 'Wrong credentials'}
 
 
 async def set_token(user):
@@ -61,6 +68,36 @@ async def set_token(user):
     return {'token': token, 'expire': str(expire)}
 
 
+async def validate(data):
+    try:
+        try:
+            token_data = await process_token(**data)
+        except (DoesNotExist, ValueError):
+            return {'status': 'error', 'error_text': 'Wrong token is given'}
+
+        if token_data['expired'] is True:
+            raise ExpiredToken
+
+        user = await User.objects.get(email=token_data['decoded_data']['email'])
+        return {'status': 'ok',
+                'data': {key: value for key, value in (await user.to_dict()).items() if key != 'password'}}
+    except ExpiredToken as e:
+        return {'status': 'error', 'error_text': str(e)}
+
+
+async def process_token(email, token):
+    decoded_data = jwt.decode(token, sharable_secret)
+    token_user = await User.objects.get(email=email)
+    token_obj = await Token.objects.get(user_id=token_user.id)
+
+    if token_obj.token != token:
+        raise ValueError
+
+    expire_obj = datetime.datetime.strptime(decoded_data['expire_date'], '%Y-%m-%d %H:%M:%S.%f')
+
+    return {'expired': expire_obj < datetime.datetime.now(), 'decoded_data': decoded_data}
+
+
 async def main(loop):
     connection = await aio_pika.connect_robust("amqp://guest:guest@127.0.0.1/", loop=loop)
     methods_dict = {'login': login, 'singup': singup, 'validate': validate}
@@ -75,21 +112,31 @@ async def main(loop):
                 async with message.process():
                     body = pickle.loads(message.body)
                     print('body', body)
+
                     if body['type'] in methods_dict:
                         r = await methods_dict[body['type']](body['data'])
-                        print(r)
+                        message_body = pickle.dumps({
+                            'request_id': body['request_id'],
+                            'type': body['type'],
+                            'data': r
+                        })
+
                         await channel.default_exchange.publish(
-                            aio_pika.Message(body=pickle.dumps({'request_id': body['request_id'],
-                                                                'type': body['type'], 'data': r})),
+                            aio_pika.Message(body=message_body),
                             routing_key=outbound_name)
                     else:
+                        message_body = pickle.dumps({
+                            'request_id': body['request_id'],
+                            'type': body['type'],
+                            'data': {
+                                'status': 'error',
+                                'error_text': 'Wrong type'
+                            }
+                        })
+
                         await channel.default_exchange.publish(
-                            aio_pika.Message(body=pickle.dumps({'request_id': body['request_id'],
-                                                                'type': body['type'],
-                                                                'data': {'status': 'error',
-                                                                         'error_text': 'Wrong type'}})),
+                            aio_pika.Message(body=message_body),
                             routing_key=outbound_name)
-                        print('not in dict!')
 
 
 if __name__ == "__main__":

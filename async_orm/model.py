@@ -467,8 +467,11 @@ class Model(metaclass=ModelMeta):
     objects = Manage()
 
     async def to_dict(self):
-        return {field_name: getattr(self, field_name) if type(field) != DateField else str(getattr(self, field_name))
-                for field_name, field in self._fields.items()}
+        fields = {'id': getattr(self, 'id')}
+        fields.update(
+            {field_name: getattr(self, field_name) if type(field) != DateField else str(getattr(self, field_name))
+             for field_name, field in self._fields.items()})
+        return fields
 
     async def check_fields(self):
         """Return exception if required field is none"""

@@ -1,4 +1,4 @@
-from .views import index, search, singup, login, current_user
+from .views import search, singup, login, current_user
 
 
 def setup_routes(app):
