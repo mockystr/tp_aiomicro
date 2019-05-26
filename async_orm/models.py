@@ -39,6 +39,7 @@ class Token(Model):
 
     class Meta:
         table_name = 'token'
+        order_by = ('user_id',)
 
 
 token_sql = """
@@ -62,6 +63,7 @@ class CrawlerStats(Model):
 
     class Meta:
         table_name = 'crawler_stats'
+        order_by = ('domain', )
 
 
 crawler_stats_sql = """
