@@ -1,5 +1,6 @@
 import asyncio
 import aio_pika
+from .utils import inbound_name
 
 
 async def main(loop):
@@ -7,10 +8,10 @@ async def main(loop):
         "amqp://guest:guest@127.0.0.1/", loop=loop
     )
 
-    async with connection:
-        queue_name = "inbound"
-        channel = await connection.channel()
+    queue_name = inbound_name
 
+    async with connection:
+        channel = await connection.channel()
         queue = await channel.declare_queue(queue_name, auto_delete=True)
 
         async with queue.iterator() as queue_iter:

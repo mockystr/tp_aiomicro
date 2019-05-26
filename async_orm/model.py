@@ -424,7 +424,7 @@ class Manage:
                                           format(self.model_cls._table_name, len(res)))
         elif len(res) == 0:
             raise DoesNotExist('{} matching query does not exist.'.
-                               format(self.model_cls._table_name))
+                               format(self.model_cls._table_name.capitalize()))
         else:
             res_d = dict(zip([i for i in res[0].keys()], res[0]))
         await conn_pool.release(con)

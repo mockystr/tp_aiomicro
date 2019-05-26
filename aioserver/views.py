@@ -27,7 +27,8 @@ async def singup(request):
             raise ValueError("Password must be more than 4 characters.")
 
         now = datetime.datetime.now()
-        user = await User.objects.create(email=data['email'], password=get_hashed_password(data['password']),
+        user = await User.objects.create(email=data['email'],
+                                         password=get_hashed_password(data['password'].encode()).decode('utf-8'),
                                          name=data.get('name'), created_date=now, last_login_date=now)
 
         return await json_response({'status': 'ok', 'data': await set_token(user)})
@@ -47,7 +48,7 @@ async def login(request):
         data = await request.json()
         user = await User.objects.get(email=data['email'])
 
-        if not check_password(data['password'], user.password):
+        if not check_password(data['password'].encode(), user.password.encode()):
             raise ValueError
 
         user.last_login_date = datetime.datetime.now()
@@ -56,7 +57,7 @@ async def login(request):
     except DoesNotExist as e:
         return await json_response({'status': 'error', 'error_text': str(e)})
     except (KeyError, ValueError) as e:
-        return await json_response({'status': 'error', 'error_text': str(e)})
+        return await json_response({'status': 'error', 'error_text': 'Wrong credentials'})
 
 
 async def set_token(user):
@@ -76,13 +77,13 @@ async def set_token(user):
 
 
 async def process_token(request):
-    token = request.headers.get('authorization')
-    decoded_data = jwt.decode(token.split(' ')[1], sharable_secret)
-    print('request user', request['user'])
-    # try:
-    #     token_obj = await Token.objects.get(token=token)
-    # except DoesNotExist:
-    #     pass
+    token = request.headers.get('authorization').split(' ')[1]
+    decoded_data = jwt.decode(token, sharable_secret)
+    token_user = await User.objects.get(email=request['user']['email'])
+    token_obj = await Token.objects.get(user_id=token_user.id)
+
+    if token_obj.token != token:
+        raise ValueError
 
     expire_obj = datetime.datetime.strptime(decoded_data['expire_date'], '%Y-%m-%d %H:%M:%S.%f')
 
@@ -90,8 +91,16 @@ async def process_token(request):
 
 
 async def current_user(request):
+    auth = AuthMS()
+
+    await auth.make_request('current_user', {'id': 1})
+
     try:
-        token_data = await process_token(request)
+        try:
+            token_data = await process_token(request)
+        except (DoesNotExist, ValueError):
+            return await json_response({'status': 'error', 'error_text': 'Wrong token is given'})
+
         if token_data['expired'] is True:
             raise ExpiredToken
 
