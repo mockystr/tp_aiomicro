@@ -1,4 +1,4 @@
-from .views import singup, login, current_user, index, stat, search
+from aioserver.views import singup, login, current_user, index, stat, search
 
 
 def setup_routes(app):

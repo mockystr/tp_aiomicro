@@ -1,10 +1,10 @@
 from aioelasticsearch import Elasticsearch
 from aioelasticsearch.helpers import Scan
 
-from .utils import json_response, get_domain
-from ..aioauth.interface import AuthMS
-from ..crawler.interface import CrawlerMS
-from ..async_orm.models import CrawlerStats, User
+from aioserver.utils import json_response, get_domain
+from aioauth.interface import AuthMS
+from crawler.interface import CrawlerMS
+from async_orm.models import CrawlerStats, User
 
 auth_ms = AuthMS()
 crawler_ms = CrawlerMS()

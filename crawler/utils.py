@@ -1,6 +1,5 @@
 import asyncio
 import aio_pika
-import bcrypt
 
 current_loop = asyncio.get_event_loop()
 queue_name = "crawler_inbound"

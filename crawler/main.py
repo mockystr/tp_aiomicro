@@ -1,10 +1,10 @@
 import asyncio
 import pickle
 from aio_pika import connect, IncomingMessage
-from .settings import RPS, START_URL
-from .crawler import Crawler
-from .utils import collect_url, current_loop
-from ..async_orm.models import CrawlerStats
+from crawler.settings import RPS
+from crawler.crawler import Crawler
+from crawler.utils import collect_url, current_loop
+from async_orm.models import CrawlerStats
 
 
 async def index_consumer(message: IncomingMessage):
@@ -40,11 +40,3 @@ if __name__ == "__main__":
     main_loop.create_task(main(main_loop))
     print("[*] Waiting for crawler messages. To exit press CTRL+C")
     main_loop.run_forever()
-
-# if __name__ == '__main__':
-#     # with pool ~14s
-#     # best score was 11.5
-#
-#     # without pool ~50s
-#     # sync 78s
-#     asyncio.run(Crawler(start_url=START_URL, rps=RPS).main())

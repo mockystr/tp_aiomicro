@@ -1,5 +1,5 @@
 import datetime
-from .exceptions import IntegrityError
+from async_orm.exceptions import IntegrityError
 
 
 class Field:

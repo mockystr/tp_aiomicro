@@ -1,15 +1,17 @@
 import asyncio
 import time
-from .models import User, Token
-from .utils import current_loop
+from async_orm.models import User, Token
+from async_orm.utils import current_loop
 import datetime
 
 
 async def main():
-    print(await User.objects.get(email='2@mail.ru'))
-    print(await Token.objects.filter(token='asdasd'))
+    qs = await Token.objects.all().filter(user_id__in=[13, 14][:2])
+    print(qs.__dict__)
+
     # print(await User.objects.create(email='1', password='12', name='as'))
-    # res = await Man.objects.all().filter()
+
+    # res = await Token.objects.all().filter()
     # print(res)
 
     # user = await Man.objects.get(id=28)

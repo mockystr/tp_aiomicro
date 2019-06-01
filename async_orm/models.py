@@ -1,6 +1,6 @@
-from .model import Model
-from .fields import (StringField, IntField, DateField,
-                    FloatField, BooleanField)
+from async_orm.model import Model
+from async_orm.fields import (StringField, IntField, DateField,
+                              FloatField, BooleanField)
 
 
 class User(Model):
@@ -63,7 +63,7 @@ class CrawlerStats(Model):
 
     class Meta:
         table_name = 'crawler_stats'
-        order_by = ('domain', )
+        order_by = ('domain',)
 
 
 crawler_stats_sql = """

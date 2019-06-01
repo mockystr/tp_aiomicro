@@ -2,8 +2,8 @@ import jwt
 from aiohttp import web
 from aiohttp_jwt import JWTMiddleware
 
-from .routes import setup_routes
-from .settings import sharable_secret
+from aioserver.routes import setup_routes
+from aioserver.settings import sharable_secret
 
 
 def main():

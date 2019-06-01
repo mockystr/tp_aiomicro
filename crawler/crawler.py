@@ -6,7 +6,6 @@ from time import time
 from urllib.parse import urljoin, urlparse, urldefrag
 from aioelasticsearch import Elasticsearch
 from bs4 import BeautifulSoup
-from .settings import RPS, START_URL
 
 
 class Crawler:
@@ -119,7 +118,6 @@ class Crawler:
                             id=self.tmp_id,
                             body={'text': await self.clean_text(soup), 'url': link})
 
-
     @staticmethod
     async def clean_text(soup):
         [script.extract() for script in soup(["script", "style"])]
@@ -137,12 +135,3 @@ class Crawler:
                                   [i.get('href', '') for i in soup.find_all('a')]))
         links = [urldefrag(x)[0] for x in absolute_links if x.startswith(self.domain)]
         return links, soup
-
-
-if __name__ == '__main__':
-    this_loop = asyncio.get_event_loop()
-    t0 = time()
-    c = Crawler(start_url=START_URL, loop=this_loop, rps=RPS, max_count=1000)
-    this_loop.run_until_complete(c.main())
-    print(c.tmp_id)
-    print(time() - t0)

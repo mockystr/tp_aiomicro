@@ -2,7 +2,7 @@ import asyncio
 import pickle
 import uuid
 import aio_pika
-from .utils import current_loop, set_connection, inbound_name, outbound_name
+from aioauth.utils import current_loop, set_connection, inbound_name, outbound_name
 
 connection, channel, inbound_queue, outbound_queue = current_loop.run_until_complete(set_connection(current_loop))
 

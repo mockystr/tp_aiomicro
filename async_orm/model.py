@@ -2,21 +2,21 @@ import asyncio
 import asyncpg
 import psycopg2
 from psycopg2 import sql
-from .utils import current_loop
-from .fields import Field
-from .fields import DateField
-from .exceptions import (MultipleObjectsReturned,
-                         DoesNotExist,
-                         DeleteError,
-                         OrderByFieldError,
-                         IntegrityError,
-                         ParentClashError,
-                         FieldLookupError)
-from .db_settings import (user_db_constant,
-                          password_db_constant,
-                          host_db_constant,
-                          database_db_constant,
-                          port_db_constant)
+from async_orm.utils import current_loop
+from async_orm.fields import Field
+from async_orm.fields import DateField
+from async_orm.exceptions import (MultipleObjectsReturned,
+                                  DoesNotExist,
+                                  DeleteError,
+                                  OrderByFieldError,
+                                  IntegrityError,
+                                  ParentClashError,
+                                  FieldLookupError)
+from async_orm.db_settings import (user_db_constant,
+                                   password_db_constant,
+                                   host_db_constant,
+                                   database_db_constant,
+                                   port_db_constant)
 
 
 async def create_conn_cur():
@@ -160,9 +160,10 @@ class QuerySet:
         else:
             self._order_by = None
 
-    # def __await__(self):
-    #     print('AIWJDOAIWJDOIAWJDOIJ')
-    #     yield from self._build().__await__()
+    def __await__(self):
+        print('from __await__')
+        yield from self._build().__await__()
+        return self
 
     def format_where(self):
         if self.where:
@@ -228,7 +229,7 @@ class QuerySet:
         else:
             self.limit = key
 
-    async def filter(self, *_, **kwargs):
+    def filter(self, *_, **kwargs):
         """Get rows that are suitable for condition"""
         if kwargs:
             [Condition.check_fields(i, self.model_cls) for i in kwargs.items()]
@@ -269,12 +270,6 @@ class QuerySet:
                 self._order_by = [*self._order_by, *args]
         else:
             self._order_by = args
-        return self
-
-    async def reverse(self):
-        if self.res is not None:
-            if isinstance(self.res, list):
-                self.res.reverse()
         return self
 
     async def update(self, *_, **kwargs):
@@ -393,11 +388,11 @@ class Manage:
         self.model_cls = owner
         return self
 
-    async def all(self):
+    def all(self):
         """Get all rows from table"""
         return QuerySet(self.model_cls)
 
-    async def filter(self, *_, **kwargs):
+    def filter(self, *_, **kwargs):
         """Get rows that are suitable for condition"""
         [Condition.check_fields(i, self.model_cls) for i in kwargs.items()]
         return QuerySet(self.model_cls, kwargs)
