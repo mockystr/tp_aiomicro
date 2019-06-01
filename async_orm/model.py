@@ -252,7 +252,7 @@ class QuerySet:
     def __getitem__(self, key):
         return self.async_getitem(key)
 
-    async def order_by(self, *args):
+    def order_by(self, *args):
         if isinstance(args, (tuple, list)):
             stripped_order = [i.strip('-') for i in args]
             if not set(stripped_order).issubset(self.fields.keys()):

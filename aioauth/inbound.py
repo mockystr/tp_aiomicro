@@ -5,11 +5,48 @@ import datetime
 import time
 import aio_pika
 from validate_email import validate_email
-from .utils import inbound_name, outbound_name, check_password, get_hashed_password
-from ..async_orm.models import User, Token, CrawlerStats
-from ..aioserver.exceptions import UserExists, ExpiredToken
-from ..async_orm.exceptions import DoesNotExist
-from ..aioserver.settings import TOKEN_EXPIRE_MINUTES, sharable_secret
+from aioauth.utils import inbound_name, outbound_name, check_password, get_hashed_password
+from async_orm.models import User, Token, CrawlerStats
+from aioserver.exceptions import UserExists, ExpiredToken
+from async_orm.exceptions import DoesNotExist
+from aioserver.settings import TOKEN_EXPIRE_MINUTES, sharable_secret
+
+
+class Task:
+    def __init__(self):
+        pass
+
+    async def perform(self):
+        pass
+
+
+class Signup(Task):
+    def __init__(self, email, password, name):
+        pass
+
+    async def perform(self):
+        try:
+            if await (await User.objects.filter(email=data['email'])).count():
+                raise UserExists()
+
+            if not validate_email(data['email']):
+                raise ValueError("Wrong email")
+
+            if len(data['password']) <= 4:
+                raise ValueError("Password must be more than 4 characters.")
+
+            now = datetime.datetime.now()
+            user = await User.objects.create(email=data['email'],
+                                             password=get_hashed_password(data['password'].encode()).decode('utf-8'),
+                                             name=data.get('name'), created_date=now, last_login_date=now)
+
+            return {'status': 'ok', 'data': await set_token(user)}
+        except KeyError:
+            return {'status': 'error', 'error_text': 'You must enter email and password', 'data': {}}
+        except UserExists as e:
+            return {'status': 'error', 'error_text': str(e), 'data': {}}
+        except ValueError as e:
+            return {'status': 'error', 'error_text': str(e), 'data': {}}
 
 
 async def singup(data):
