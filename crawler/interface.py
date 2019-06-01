@@ -3,10 +3,11 @@ import datetime
 import pickle
 import uuid
 import aio_pika
-from .utils import current_loop, set_connection, queue_name
-from .settings import TIME_REFRESH_MINUTES
-from ..async_orm.models import CrawlerStats, User
-from ..async_orm.exceptions import DoesNotExist
+from project_config import crawler_queue_name
+from crawler.utils import current_loop, set_connection
+from crawler.settings import TIME_REFRESH_MINUTES
+from async_orm.models import CrawlerStats, User
+from async_orm.exceptions import DoesNotExist
 
 connection, channel, queue = current_loop.run_until_complete(set_connection(current_loop))
 
@@ -36,7 +37,7 @@ class CrawlerMS:
 
             await channel.default_exchange.publish(
                 aio_pika.Message(body=message_body),
-                routing_key=queue_name)
+                routing_key=crawler_queue_name)
 
             return {'status': 'ok', 'data': {'id': cs.id, 'domain': cs.domain, 'https': cs.https, 'time': str(cs.time)}}
         except (ValueError, KeyError):

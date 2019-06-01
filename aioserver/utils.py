@@ -4,8 +4,10 @@ from urllib.parse import urlparse
 from aiohttp import web
 
 
-async def json_response(data):
-    return web.Response(text=json.dumps(data), headers={'content-type': 'application/json'})
+async def json_response(data, status=200):
+    return web.Response(text=json.dumps(data),
+                        headers={'content-type': 'application/json'},
+                        status=status)
 
 
 def get_hashed_password(plain_text_password):

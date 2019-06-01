@@ -1,6 +1,7 @@
 import asyncio
 import pickle
 from aio_pika import connect, IncomingMessage
+from project_config import rabbit_connection
 from crawler.settings import RPS
 from crawler.crawler import Crawler
 from crawler.utils import collect_url, current_loop
@@ -28,7 +29,7 @@ async def index_consumer(message: IncomingMessage):
 
 
 async def main(loop):
-    connection = await connect("amqp://guest:guest@localhost/", loop=loop)
+    connection = await connect(rabbit_connection, loop=loop)
     channel = await connection.channel()
     queue = await channel.declare_queue('crawler_inbound')
 

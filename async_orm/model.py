@@ -163,6 +163,7 @@ class QuerySet:
     def __await__(self):
         print('from __await__')
         yield from self._build().__await__()
+        self.res_iter = iter(self.res)
         return self
 
     def format_where(self):

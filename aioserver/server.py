@@ -11,7 +11,7 @@ def main():
         middlewares=[
             JWTMiddleware(secret_or_pub_key=sharable_secret,
                           request_property='user',
-                          whitelist=(r'/singup', r'/login', r'/search')),
+                          whitelist=(r'/signup', r'/login', r'/search')),
         ]
     )
     setup_routes(app)

@@ -11,8 +11,7 @@ class AuthMS:
     async def make_request(self, request_type: str, data: dict, timeout=5):
         try:
             r = await asyncio.wait_for(self.execute(request_type, data), timeout=timeout)
-        except asyncio.TimeoutError as e:
-            print(type(e))
+        except asyncio.TimeoutError:
             return {'status': 'error', 'error_text': 'Timeout error'}
         else:
             return r

@@ -10,9 +10,9 @@ auth_ms = AuthMS()
 crawler_ms = CrawlerMS()
 
 
-async def singup(request):
+async def signup(request):
     data = await request.json()
-    return await json_response(await auth_ms.make_request(request_type='singup', data=data, timeout=5))
+    return await json_response(await auth_ms.make_request(request_type='signup', data=data, timeout=5))
 
 
 async def login(request):
@@ -46,8 +46,6 @@ async def stat(request):
     author = await User.objects.get(email=request['user']['email'])
     cs = await CrawlerStats.objects.filter(author_id=author.id)
     return await json_response({'status': 'ok', 'data': [await i.to_dict() async for i in cs]})
-    # except Exception as e:
-    #     return await json_response({'status': 'error', 'error_text': str(e)})
 
 
 async def search(request):
