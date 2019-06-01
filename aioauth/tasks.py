@@ -10,14 +10,14 @@ from aioserver.exceptions import UserExists, ExpiredToken
 from async_orm.exceptions import DoesNotExist
 
 
-class Task(type):
-    def __new__(mcs, name: str, bases, namespace):
-        return super().__new__(mcs, name.capitalize(), bases, namespace)
+# class Task(type):
+#     def __new__(mcs, name: str, bases, namespace):
+#         return super().__new__(mcs, name.capitalize(), bases, namespace)
 
 
 async def set_token(user):
     expire = datetime.datetime.now() + datetime.timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    token = jwt.encode({'user_id': user.id, 'email': user.email, 'password': user.password, 'expire_date': str(expire)},
+    token = jwt.encode({'user_id': user.id, 'email': user.email, 'expire_date': str(expire)},
                        key=sharable_secret).decode('utf-8')
 
     try:
@@ -36,7 +36,7 @@ async def process_token(token):
     token_obj = await Token.objects.get(token=token)
 
     if token_obj.token != token:
-        raise ValueError
+        raise ValueError("Wrong token is given")
 
     expire_obj = datetime.datetime.strptime(decoded_data['expire_date'], '%Y-%m-%d %H:%M:%S.%f')
 
@@ -50,28 +50,20 @@ class SignupTask:
         self.name = name
 
     async def perform(self):
-        try:
-            if await (await User.objects.filter(email=self.email)).count():
-                raise UserExists()
+        if not validate_email(self.email):
+            raise ValueError("Wrong email")
 
-            if not validate_email(self.email):
-                raise ValueError("Wrong email")
+        if len(self.password) <= 4:
+            raise ValueError("Password must be more than 4 characters.")
 
-            if len(self.password) <= 4:
-                raise ValueError("Password must be more than 4 characters.")
-
-            now = datetime.datetime.now()
+        now = datetime.datetime.now()
+        if not await User.objects.filter(email=self.email).count():
             user = await User.objects.create(email=self.email,
                                              password=get_hashed_password(self.password.encode()).decode('utf-8'),
                                              name=self.name, created_date=now, last_login_date=now)
-
             return {'status': 'ok', 'data': await set_token(user)}
-        except KeyError:
-            return {'status': 'error', 'error_text': 'You must enter email and password', 'data': {}}
-        except UserExists as e:
-            return {'status': 'error', 'error_text': str(e), 'data': {}}
-        except ValueError as e:
-            return {'status': 'error', 'error_text': str(e), 'data': {}}
+        else:
+            raise UserExists
 
 
 class LoginTask:
@@ -80,19 +72,14 @@ class LoginTask:
         self.password = password
 
     async def perform(self):
-        try:
-            user = await User.objects.get(email=self.email)
+        user = await User.objects.get(email=self.email)
 
-            if not check_password(self.password.encode(), user.password.encode()):
-                raise ValueError
+        if not check_password(self.password.encode(), user.password.encode()):
+            raise ValueError
 
-            user.last_login_date = datetime.datetime.now()
-            await user.save()
-            return {'status': 'ok', 'data': await set_token(user)}
-        except DoesNotExist as e:
-            return {'status': 'error', 'error_text': str(e)}
-        except (KeyError, ValueError):
-            return {'status': 'error', 'error_text': 'Wrong credentials'}
+        user.last_login_date = datetime.datetime.now()
+        await user.save()
+        return {'status': 'ok', 'data': await set_token(user)}
 
 
 class ValidateTask:
@@ -100,17 +87,11 @@ class ValidateTask:
         self.token = token
 
     async def perform(self):
-        try:
-            try:
-                token_data = await process_token(self.token)
-            except (DoesNotExist, ValueError):
-                return {'status': 'error', 'error_text': 'Wrong token is given'}
+        token_data = await process_token(self.token)
 
-            if token_data['expired'] is True:
-                raise ExpiredToken
+        if token_data['expired'] is True:
+            raise ExpiredToken
 
-            user = await User.objects.get(email=token_data['decoded_data']['email'])
-            return {'status': 'ok',
-                    'data': {key: value for key, value in (await user.to_dict()).items() if key != 'password'}}
-        except ExpiredToken as e:
-            return {'status': 'error', 'error_text': str(e)}
+        user = await User.objects.get(email=token_data['decoded_data']['email'])
+        return {'status': 'ok',
+                'data': {key: value for key, value in (await user.to_dict()).items() if key != 'password'}}

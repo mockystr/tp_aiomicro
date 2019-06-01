@@ -10,40 +10,36 @@ from aioauth.tasks import LoginTask, SignupTask, ValidateTask
 async def main(loop):
     connection = await aio_pika.connect_robust(rabbit_connection, loop=loop)
     methods_dict = {'login': LoginTask, 'signup': SignupTask, 'validate': ValidateTask}
-
     async with connection:
         channel = await connection.channel()
         inbound_queue = await channel.declare_queue(inbound_name)
+        outbound_exchange = await channel.declare_exchange('outbound_exchange', aio_pika.ExchangeType.FANOUT)
 
         async with inbound_queue.iterator() as queue_iter:
             async for message in queue_iter:
                 async with message.process():
                     body = pickle.loads(message.body)
 
-                    if body['type'] in methods_dict:
+                    try:
                         r = await methods_dict[body['type']](**body['data']).perform()
                         message_body = pickle.dumps({
                             'request_id': body['request_id'],
                             'type': body['type'],
                             'data': r
                         })
-
-                        await channel.default_exchange.publish(
-                            aio_pika.Message(body=message_body),
-                            routing_key=outbound_name)
-                    else:
+                    except Exception as e:
                         message_body = pickle.dumps({
                             'request_id': body['request_id'],
                             'type': body['type'],
                             'data': {
                                 'status': 'error',
-                                'error_text': 'Wrong type'
+                                'reason': str(e)
                             }
                         })
 
-                        await channel.default_exchange.publish(
-                            aio_pika.Message(body=message_body),
-                            routing_key=outbound_name)
+                    await outbound_exchange.publish(
+                        aio_pika.Message(body=message_body),
+                        routing_key=outbound_name)
 
 
 if __name__ == "__main__":

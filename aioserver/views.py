@@ -32,8 +32,11 @@ async def index(request):
         return await json_response(validate_response)
 
     data = await request.json()
+
+    if not data.get('https') or not data.get('domain'):
+        return await json_response({'status': 'error', 'reason': 'Wrong data is given'})
+
     data.update({'email': request['user']['email']})
-    print('from views data', data)
     return await json_response(await crawler_ms.make_nowait_request('index', data))
 
 
@@ -43,8 +46,7 @@ async def stat(request):
     if validate_response['status'] != 'ok':
         return await json_response(validate_response)
 
-    author = await User.objects.get(email=request['user']['email'])
-    cs = await CrawlerStats.objects.filter(author_id=author.id)
+    cs = await CrawlerStats.objects.filter(author_id=request['user']['user_id'])
     return await json_response({'status': 'ok', 'data': [await i.to_dict() async for i in cs]})
 
 
@@ -58,7 +60,7 @@ async def search(request):
         if limit > 100:
             raise
     except Exception:
-        return await json_response({'status': 'bad_request', 'error_text': 'Wrong parameters'})
+        return await json_response({'status': 'bad_request', 'reason': 'Wrong parameters'})
 
     body = {'query': {'match': {'text': q}}}
 

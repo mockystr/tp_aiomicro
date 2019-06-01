@@ -6,10 +6,10 @@ import datetime
 
 
 async def main():
-    qs = await Token.objects.all().filter(user_id__in=[13, 14][:2])
-    print(qs.__dict__)
+    # qs = await Token.objects.all().filter(user_id__in=[13, 14][:2])
+    # print(qs.__dict__)
 
-    # print(await User.objects.create(email='1', password='12', name='as'))
+    print(await User.objects.create(email='1', password='12', name='as'))
 
     # res = await Token.objects.all().filter()
     # print(res)

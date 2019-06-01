@@ -21,13 +21,15 @@ class CrawlerMS:
             author = await User.objects.get(email=data['email'])
             try:
                 cs = await CrawlerStats.objects.get(domain=data['domain'])
+
                 if cs.time + datetime.timedelta(minutes=TIME_REFRESH_MINUTES) < datetime.datetime.now():
                     cs.author_id = author.id
                     cs.time = datetime.datetime.now()
                     await cs.save()
                 else:
-                    wait_time = (cs.time + datetime.timedelta(
-                        minutes=TIME_REFRESH_MINUTES) - datetime.datetime.now()).total_seconds() / 60
+                    wait_time = (cs.time
+                                 + datetime.timedelta(minutes=TIME_REFRESH_MINUTES)
+                                 - datetime.datetime.now()).total_seconds() / 60
                     return {'status': 'bad_request',
                             'error_text': 'You need to wait {:0.1f} minutes for update index'.format(wait_time)}
             except DoesNotExist:
