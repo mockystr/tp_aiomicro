@@ -5,8 +5,8 @@ import uuid
 import aio_pika
 from project_config import crawler_queue_name
 from crawler.utils import current_loop, set_connection
-from crawler.settings import TIME_REFRESH_MINUTES
-from async_orm.models import CrawlerStats, User
+from project_config import TIME_REFRESH_MINUTES
+from async_orm.models import CrawlerStats
 from async_orm.exceptions import DoesNotExist
 
 connection, channel, queue = current_loop.run_until_complete(set_connection(current_loop))

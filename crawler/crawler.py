@@ -99,7 +99,6 @@ class Crawler:
                         await asyncio.sleep(self.sleep_time)
                         await pool.push(link=link, es=es, session=session)
                         self.time_statistic.append(time() - time_for_link)
-        print(sum(self.time_statistic))
         return {'pages': self.tmp_id,
                 'avg_time_per_page': sum(self.time_statistic) / self.tmp_id,
                 'max_time_per_page': max(self.time_statistic),
@@ -111,7 +110,6 @@ class Crawler:
                 self.stop_signal = True
                 return
 
-            # print(link)
             new_links, soup = await self.get_links(await resp.text())
             self.set_links.add(link)
             self.tmp_id += 1

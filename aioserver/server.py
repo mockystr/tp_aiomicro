@@ -3,7 +3,7 @@ from aiohttp import web
 from aiohttp_jwt import JWTMiddleware
 from aioserver.middlewares import TokenValidationMiddleware
 from aioserver.routes import setup_routes
-from aioserver.settings import sharable_secret
+from project_config import sharable_secret
 
 
 def main():

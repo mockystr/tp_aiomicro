@@ -1,8 +1,8 @@
-from aioelasticsearch import Elasticsearch
 from aioelasticsearch.helpers import Scan
 
-from aioserver.utils import json_response, get_domain, auth_ms, crawler_ms
+from aioserver.utils import json_response, get_domain, auth_ms, crawler_ms, es
 from async_orm.models import CrawlerStats
+from aioserver.api_schemas import SearchViewSchema
 
 
 async def signup(request):
@@ -36,16 +36,14 @@ async def stat(request):
 
 
 async def search(request):
-    es = Elasticsearch()
     try:
-        q = request.query['q']
-        limit = int(request.query.get('limit', 0))
-        offset = int(request.query.get('offset', 0))
-
-        if limit > 100:
-            raise
-    except Exception:
-        return await json_response({'status': 'bad_request', 'reason': 'Wrong parameters'})
+        schema = SearchViewSchema()
+        r = schema.dump({**request.query})
+        print(schema.__dict__)
+        print(r)
+        q, limit, offset = r['q'], r['limit'], r['offset']
+    except Exception as e:
+        return await json_response({'status': 'bad_request', 'reason': str(e)})
 
     body = {'query': {'match': {'text': q}}}
 

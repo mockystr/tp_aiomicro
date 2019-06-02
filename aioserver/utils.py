@@ -4,9 +4,11 @@ from aiohttp import web
 from urllib.parse import urlparse
 from aioauth.interface import AuthMS
 from crawler.interface import CrawlerMS
+from aioelasticsearch import Elasticsearch
 
 auth_ms = AuthMS()
 crawler_ms = CrawlerMS()
+es = Elasticsearch()
 
 dsn = "dbname={} user={} password={} host= {}".format('asynctest',
                                                       'emirnavruzov',
