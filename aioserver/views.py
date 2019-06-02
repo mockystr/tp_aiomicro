@@ -1,13 +1,8 @@
 from aioelasticsearch import Elasticsearch
 from aioelasticsearch.helpers import Scan
 
-from aioserver.utils import json_response, get_domain
-from aioauth.interface import AuthMS
-from crawler.interface import CrawlerMS
-from async_orm.models import CrawlerStats, User
-
-auth_ms = AuthMS()
-crawler_ms = CrawlerMS()
+from aioserver.utils import json_response, get_domain, auth_ms, crawler_ms
+from async_orm.models import CrawlerStats
 
 
 async def signup(request):
@@ -21,31 +16,21 @@ async def login(request):
 
 
 async def current_user(request):
-    data = {'token': request.headers.get('authorization').split(' ')[1]}
-    return await json_response(await auth_ms.make_request('validate', data=data, timeout=5))
+    return await json_response(await auth_ms.make_request('validate',
+                                                          data={'token': request['user']['split_token']}, timeout=5))
 
 
 async def index(request):
-    data = {'token': request.headers.get('authorization').split(' ')[1]}
-    validate_response = await auth_ms.make_request('validate', data=data, timeout=5)
-    if validate_response['status'] != 'ok':
-        return await json_response(validate_response)
-
     data = await request.json()
+    print(data.get('https'), data.get('domain'))
+    if data.get('https') is None or data.get('domain') is None:
+        return await json_response({'status': 'error', 'reason': 'Wrong data is given'}, status=400)
 
-    if not data.get('https') or not data.get('domain'):
-        return await json_response({'status': 'error', 'reason': 'Wrong data is given'})
-
-    data.update({'email': request['user']['email']})
+    data.update({'author_id': request['user']['user_id']})
     return await json_response(await crawler_ms.make_nowait_request('index', data))
 
 
 async def stat(request):
-    data = {'token': request.headers.get('authorization').split(' ')[1]}
-    validate_response = await auth_ms.make_request('validate', data=data, timeout=5)
-    if validate_response['status'] != 'ok':
-        return await json_response(validate_response)
-
     cs = await CrawlerStats.objects.filter(author_id=request['user']['user_id'])
     return await json_response({'status': 'ok', 'data': [await i.to_dict() async for i in cs]})
 

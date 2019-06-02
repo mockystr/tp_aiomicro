@@ -27,7 +27,17 @@ async def main(loop):
                             'type': body['type'],
                             'data': r
                         })
+                    except TypeError:
+                        message_body = pickle.dumps({
+                            'request_id': body['request_id'],
+                            'type': body['type'],
+                            'data': {
+                                'status': 'error',
+                                'reason': 'Missing data'
+                            }
+                        })
                     except Exception as e:
+                        print(type(e))
                         message_body = pickle.dumps({
                             'request_id': body['request_id'],
                             'type': body['type'],

@@ -1,7 +1,17 @@
-import bcrypt
 import json
-from urllib.parse import urlparse
+import bcrypt
 from aiohttp import web
+from urllib.parse import urlparse
+from aioauth.interface import AuthMS
+from crawler.interface import CrawlerMS
+
+auth_ms = AuthMS()
+crawler_ms = CrawlerMS()
+
+dsn = "dbname={} user={} password={} host= {}".format('asynctest',
+                                                      'emirnavruzov',
+                                                      'qwe123',
+                                                      '127.0.0.1')
 
 
 async def json_response(data, status=200):
@@ -20,9 +30,3 @@ def check_password(plain_text_password, hashed_password):
 
 async def get_domain(url):
     return '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url))
-
-
-dsn = "dbname={} user={} password={} host= {}".format('asynctest',
-                                                      'emirnavruzov',
-                                                      'qwe123',
-                                                      '127.0.0.1')

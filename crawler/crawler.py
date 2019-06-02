@@ -23,6 +23,7 @@ class Crawler:
         self.links = asyncio.Queue()
         self.tmp_id = 0
         self.time_statistic = []
+        self.stop_signal = False
 
     async def initialize_index(self, es):
         created = False
@@ -60,7 +61,7 @@ class Crawler:
     async def main(self):
         async with Elasticsearch([{'host': 'localhost', 'port': 9200}]) as es:
             if not await self.initialize_index(es):
-                return None
+                return
 
             await self.links.put(self.start_url)
 
@@ -74,6 +75,9 @@ class Crawler:
                     self.time_statistic.append(time() - t_begin)
 
                     while True:
+                        if self.stop_signal:
+                            break
+
                         time_for_link = time()
                         if not self.links.empty():
                             link = await self.links.get()
@@ -82,7 +86,7 @@ class Crawler:
                             while self.links.empty() and self.tmp_id < self.max_count:
                                 await asyncio.sleep(0.1)
 
-                                if time() - wait_time > 5:
+                                if time() - wait_time > 2:
                                     print('break')
                                     break
 
@@ -90,21 +94,24 @@ class Crawler:
                                 break
 
                             link = await self.links.get()
+                        print(link)
+
                         await asyncio.sleep(self.sleep_time)
                         await pool.push(link=link, es=es, session=session)
                         self.time_statistic.append(time() - time_for_link)
-        # print(len(self.time_statistic))
-        # print('sum stat', sum(self.time_statistic))
+        print(sum(self.time_statistic))
         return {'pages': self.tmp_id,
                 'avg_time_per_page': sum(self.time_statistic) / self.tmp_id,
                 'max_time_per_page': max(self.time_statistic),
                 'min_time_per_page': min(self.time_statistic)}
 
     async def worker(self, link, es, session):
-        async with session.get(link) as resp:
+        async with session.get(link, allow_redirects=False) as resp:
             if self.tmp_id >= self.max_count:
+                self.stop_signal = True
                 return
-            print(link)
+
+            # print(link)
             new_links, soup = await self.get_links(await resp.text())
             self.set_links.add(link)
             self.tmp_id += 1

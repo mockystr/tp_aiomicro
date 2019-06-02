@@ -18,12 +18,11 @@ class CrawlerMS:
             request_id = uuid.uuid1()
             message_body = pickle.dumps({'request_id': request_id.hex, 'type': request_type, 'data': data})
 
-            author = await User.objects.get(email=data['email'])
             try:
                 cs = await CrawlerStats.objects.get(domain=data['domain'])
 
                 if cs.time + datetime.timedelta(minutes=TIME_REFRESH_MINUTES) < datetime.datetime.now():
-                    cs.author_id = author.id
+                    cs.author_id = data['author_id']
                     cs.time = datetime.datetime.now()
                     await cs.save()
                 else:
@@ -31,9 +30,9 @@ class CrawlerMS:
                                  + datetime.timedelta(minutes=TIME_REFRESH_MINUTES)
                                  - datetime.datetime.now()).total_seconds() / 60
                     return {'status': 'bad_request',
-                            'error_text': 'You need to wait {:0.1f} minutes for update index'.format(wait_time)}
+                            'error_text': 'You need to wait {:0.2f} minutes for update index'.format(wait_time)}
             except DoesNotExist:
-                cs = await CrawlerStats.objects.create(domain=data['domain'], author_id=author.id,
+                cs = await CrawlerStats.objects.create(domain=data['domain'], author_id=data['author_id'],
                                                        https=data['https'],
                                                        time=datetime.datetime.now())
 
