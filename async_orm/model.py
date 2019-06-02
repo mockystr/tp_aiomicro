@@ -161,7 +161,7 @@ class QuerySet:
             self._order_by = None
 
     def __await__(self):
-        print('from __await__')
+        # print('from __await__')
         yield from self._build().__await__()
         self.res_iter = iter(self.res)
         return self
@@ -295,7 +295,7 @@ class QuerySet:
         query.append(sql.SQL(')'))
 
         async with conn_pool.acquire() as con:
-            print(' '.join([i.as_string(psycopg_conn) for i in query]))
+            # print(' '.join([i.as_string(psycopg_conn) for i in query]))
             return await con.execute(' '.join([i.as_string(psycopg_conn) for i in query]))
 
     async def delete(self):
@@ -332,7 +332,7 @@ class QuerySet:
             query.extend(self.format_limit())
 
         query.append(sql.SQL(') as tmp_table'))
-        print(' '.join([i.as_string(psycopg_conn) for i in query]))
+        # print(' '.join([i.as_string(psycopg_conn) for i in query]))
 
         async with conn_pool.acquire() as con:
             res_len = (await con.fetchrow(' '.join([i.as_string(psycopg_conn) for i in query])))[0]
@@ -353,7 +353,7 @@ class QuerySet:
         if self.limit:
             query.extend(self.format_limit())
 
-        print(' '.join([i.as_string(psycopg_conn) for i in query]))
+        # print(' '.join([i.as_string(psycopg_conn) for i in query]))
 
         async with conn_pool.acquire() as con:
             res = await con.fetch(' '.join([i.as_string(psycopg_conn) for i in query]))
@@ -411,7 +411,7 @@ class Manage:
             sql.Identifier(str(self.model_cls._table_name).lower()),
             sql.SQL(' AND ').join([sql.SQL(i) for i in where_list]))
 
-        print(select_get_query.as_string(psycopg_conn))
+        # print(select_get_query.as_string(psycopg_conn))
         con = await conn_pool.acquire()
         res = await con.fetch(select_get_query.as_string(psycopg_conn))
 
@@ -446,7 +446,7 @@ class Manage:
             sql.SQL(', ').join([sql.Identifier(i) for i in edited_kw.keys()]),
             sql.SQL(', ').join([sql.Literal(i) for i in edited_kw.values()]))
 
-        print(insert_query.as_string(psycopg_conn))
+        # print(insert_query.as_string(psycopg_conn))
         async with conn_pool.acquire() as con:
             res = await con.fetchrow(insert_query.as_string(psycopg_conn))
             res = dict(zip([i for i in res.keys()], res))
@@ -485,7 +485,7 @@ class Model(metaclass=ModelMeta):
         try:
             delete_query = sql.SQL("DELETE FROM {} WHERE id={}").format(sql.Identifier(str(self._table_name).lower()),
                                                                         sql.Literal(self.id))
-            print(delete_query.as_string(psycopg_conn))
+            # print(delete_query.as_string(psycopg_conn))
             async with conn_pool.acquire() as con:
                 await con.execute(delete_query.as_string(psycopg_conn))
         except Exception as e:
@@ -514,7 +514,7 @@ class Model(metaclass=ModelMeta):
             update_query = sql.SQL("UPDATE {} SET {} WHERE id={}").format(sql.Identifier(str(self._table_name).lower()),
                                                                           sql.SQL(', ').join(set_arr),
                                                                           sql.Literal(self.id))
-            print(update_query.as_string(psycopg_conn))
+            # print(update_query.as_string(psycopg_conn))
             async with conn_pool.acquire() as con:
                 await con.execute(update_query.as_string(psycopg_conn))
         else:
@@ -533,7 +533,7 @@ class Model(metaclass=ModelMeta):
                 sql.SQL(', ').join([sql.Identifier(i) for i in object_fields]),
                 sql.SQL(', ').join(values))
 
-            print(insert_query.as_string(psycopg_conn))
+            # print(insert_query.as_string(psycopg_conn))
             async with conn_pool.acquire() as con:
                 res = await con.fetch(insert_query.as_string(psycopg_conn))
                 self.id = res[0].get('id')

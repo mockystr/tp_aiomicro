@@ -10,11 +10,6 @@ from aioserver.exceptions import UserExists, ExpiredToken
 from async_orm.exceptions import DoesNotExist
 
 
-# class Task(type):
-#     def __new__(mcs, name: str, bases, namespace):
-#         return super().__new__(mcs, name.capitalize(), bases, namespace)
-
-
 async def set_token(user):
     expire = datetime.datetime.now() + datetime.timedelta(minutes=TOKEN_EXPIRE_MINUTES)
     token = jwt.encode({'user_id': user.id, 'email': user.email, 'expire_date': str(expire)},
@@ -44,7 +39,10 @@ async def process_token(token):
 
 
 class SignupTask:
-    def __init__(self, email, password, name=None):
+    def __init__(self, email=None, password=None, name=None):
+        if email is None or password is None:
+            raise TypeError("Missing data to signup")
+
         self.email = email
         self.password = password
         self.name = name
@@ -67,7 +65,10 @@ class SignupTask:
 
 
 class LoginTask:
-    def __init__(self, email, password):
+    def __init__(self, email=None, password=None):
+        if email is None or password is None:
+            raise TypeError("Missing data to login")
+
         self.email = email
         self.password = password
 
@@ -83,14 +84,17 @@ class LoginTask:
 
 
 class ValidateTask:
-    def __init__(self, token):
+    def __init__(self, token=None):
+        if token is None:
+            raise TypeError("Missing data to validate")
+
         self.token = token
 
     async def perform(self):
         token_data = await process_token(self.token)
 
         if token_data['expired'] is True:
-            raise ExpiredToken
+            raise ExpiredToken()
 
         user = await User.objects.get(email=token_data['decoded_data']['email'])
         return {'status': 'ok',

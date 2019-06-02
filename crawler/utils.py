@@ -1,8 +1,10 @@
 import asyncio
 import aio_pika
+from project_utils import set_logger
 from project_config import rabbit_connection, crawler_queue_name
 
 current_loop = asyncio.get_event_loop()
+logger = set_logger('crawler')
 
 
 async def set_connection(loop):

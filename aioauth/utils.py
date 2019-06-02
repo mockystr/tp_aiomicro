@@ -2,8 +2,10 @@ import asyncio
 import aio_pika
 import bcrypt
 from project_config import rabbit_connection, inbound_name, outbound_name
+from project_utils import set_logger
 
 current_loop = asyncio.get_event_loop()
+aioauth_logger = set_logger('aioauth')
 
 
 def get_hashed_password(plain_text_password):

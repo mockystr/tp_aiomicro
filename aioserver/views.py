@@ -1,5 +1,5 @@
 from aioelasticsearch.helpers import Scan
-
+from aioserver.utils import logger
 from aioserver.utils import json_response, get_domain, auth_ms, crawler_ms, es
 from async_orm.models import CrawlerStats
 from aioserver.api_schemas import SearchViewSchema
@@ -7,43 +7,60 @@ from aioserver.api_schemas import SearchViewSchema
 
 async def signup(request):
     data = await request.json()
-    return await json_response(await auth_ms.make_request(request_type='signup', data=data, timeout=5))
+    logger.info(data)
+    r = await auth_ms.make_request(request_type='signup', data=data, timeout=5)
+    logger.error(r) if r['status'] != 'ok' else logger.info(r)
+    return await json_response(r, status=200 if r['status'] == 'ok' else 400)
 
 
 async def login(request):
     data = await request.json()
-    return await json_response(await auth_ms.make_request(request_type='login', data=data, timeout=5))
+    logger.info(data)
+    r = await auth_ms.make_request(request_type='login', data=data, timeout=5)
+    logger.error(r) if r['status'] != 'ok' else logger.info(r)
+    return await json_response(r, status=200 if r['status'] == 'ok' else 400)
 
 
 async def current_user(request):
-    return await json_response(await auth_ms.make_request('validate',
-                                                          data={'token': request['user']['split_token']}, timeout=5))
+    logger.info(request['user']['email'])
+    r = await auth_ms.make_request('validate', data={'token': request['user']['split_token']}, timeout=5)
+    logger.error(r) if r['status'] != 'ok' else logger.info(r)
+    return await json_response(r, status=200 if r['status'] == 'ok' else 400)
 
 
 async def index(request):
     data = await request.json()
-    print(data.get('https'), data.get('domain'))
+    logger.info(data)
+
     if data.get('https') is None or data.get('domain') is None:
-        return await json_response({'status': 'error', 'reason': 'Wrong data is given'}, status=400)
+        r = {'status': 'error', 'reason': 'Wrong data is given'}
+        logger.error(r)
+        return await json_response(r, status=400)
 
     data.update({'author_id': request['user']['user_id']})
-    return await json_response(await crawler_ms.make_nowait_request('index', data))
+    r = await crawler_ms.make_nowait_request('index', data)
+    logger.info(r)
+    return await json_response(r)
 
 
 async def stat(request):
+    logger.info(request['user']['email'])
     cs = await CrawlerStats.objects.filter(author_id=request['user']['user_id'])
-    return await json_response({'status': 'ok', 'data': [await i.to_dict() async for i in cs]})
+    r = {'status': 'ok', 'data': [await i.to_dict() async for i in cs]}
+    logger.info(r)
+    return await json_response(r)
 
 
 async def search(request):
+    logger.info(request.query)
     try:
         schema = SearchViewSchema()
         r = schema.dump({**request.query})
-        print(schema.__dict__)
-        print(r)
         q, limit, offset = r['q'], r['limit'], r['offset']
     except Exception as e:
-        return await json_response({'status': 'bad_request', 'reason': str(e)})
+        r = {'status': 'bad_request', 'reason': str(e)}
+        logger.info(r)
+        return await json_response(r)
 
     body = {'query': {'match': {'text': q}}}
 
@@ -72,4 +89,7 @@ async def search(request):
 
     response_data['documents_in_list'] = list(set([await get_domain(i['url']) for i in response_data['results']]))
     response_data['count'] = len(response_data['results'])
-    return await json_response({'status': 'ok', 'data': response_data})
+
+    r = {'status': 'ok', 'data': response_data}
+    logger.info(r)
+    return await json_response(r)

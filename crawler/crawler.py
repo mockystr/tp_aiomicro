@@ -14,7 +14,6 @@ class Crawler:
         self.domain = '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(self.start_url))
         self.index_name = ''.join([i for i in self.start_url
                                    if i not in ('[', '"', '*', '\\\\', '\\', '<', '|', ',', '>', '/', '?', ':')])
-        print(self.index_name)
         self.loop = loop
         self.rps = rps
         self.max_count = max_count
@@ -94,7 +93,6 @@ class Crawler:
                                 break
 
                             link = await self.links.get()
-                        print(link)
 
                         await asyncio.sleep(self.sleep_time)
                         await pool.push(link=link, es=es, session=session)

@@ -2,7 +2,7 @@ import asyncio
 import jwt
 from aiohttp import web
 import aiohttp_jwt
-from aioserver.utils import auth_ms, json_response
+from aioserver.utils import auth_ms, json_response, logger
 
 
 def TokenValidationMiddleware(whitelist=(), request_propery='user'):
@@ -20,8 +20,10 @@ def TokenValidationMiddleware(whitelist=(), request_propery='user'):
         validate_response = await auth_ms.make_request('validate', data=data, timeout=5)
 
         if validate_response['status'] != 'ok':
+            logger.error(validate_response)
             return await json_response(validate_response, status=400)
 
+        logger.info(validate_response)
         request[request_propery]['split_token'] = token
         return await handler(request)
 

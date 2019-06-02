@@ -3,7 +3,7 @@ import pickle
 import aio_pika
 
 from project_config import rabbit_connection
-from aioauth.utils import inbound_name, outbound_name
+from aioauth.utils import inbound_name, outbound_name, aioauth_logger
 from aioauth.tasks import LoginTask, SignupTask, ValidateTask
 
 
@@ -20,6 +20,8 @@ async def main(loop):
                 async with message.process():
                     body = pickle.loads(message.body)
 
+                    aioauth_logger.info(body)
+
                     try:
                         r = await methods_dict[body['type']](**body['data']).perform()
                         message_body = pickle.dumps({
@@ -27,17 +29,7 @@ async def main(loop):
                             'type': body['type'],
                             'data': r
                         })
-                    except TypeError:
-                        message_body = pickle.dumps({
-                            'request_id': body['request_id'],
-                            'type': body['type'],
-                            'data': {
-                                'status': 'error',
-                                'reason': 'Missing data'
-                            }
-                        })
                     except Exception as e:
-                        print(type(e))
                         message_body = pickle.dumps({
                             'request_id': body['request_id'],
                             'type': body['type'],

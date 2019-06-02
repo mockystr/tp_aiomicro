@@ -1,6 +1,7 @@
 import asyncio
 import pickle
 from aio_pika import connect, IncomingMessage
+from crawler.utils import logger
 from project_config import RPS
 from crawler.crawler import Crawler
 from crawler.utils import collect_url, current_loop, set_connection
@@ -10,11 +11,14 @@ from async_orm.models import CrawlerStats
 async def index_consumer(message: IncomingMessage):
     async with message.process():
         body = pickle.loads(message.body)
+
+        logger.info(body)
+
         url = await collect_url(body['data']['https'], body['data']['domain'])
         r = await Crawler(start_url=url, rps=RPS, max_count=50, loop=current_loop).main()
 
         if r is None:
-            print('ERROR')
+            logger.error("Something went wrong")
             return
 
         cs = await CrawlerStats.objects.get(domain=body['data']['domain'])
@@ -23,6 +27,8 @@ async def index_consumer(message: IncomingMessage):
         cs.max_time_per_page = r['max_time_per_page']
         cs.min_time_per_page = r['min_time_per_page']
         await cs.save()
+
+        logger.info('Successfully saved {}'.format(url))
 
 
 async def main(loop):
