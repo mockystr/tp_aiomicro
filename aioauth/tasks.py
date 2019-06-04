@@ -12,7 +12,7 @@ from async_orm.exceptions import DoesNotExist
 
 async def set_token(user):
     expire = datetime.datetime.now() + datetime.timedelta(minutes=TOKEN_EXPIRE_MINUTES)
-    token = jwt.encode({'user_id': user.id, 'email': user.email, 'expire_date': str(expire)},
+    token = jwt.encode({'user_id': user.id, 'expire_date': str(expire)},
                        key=sharable_secret).decode('utf-8')
 
     try:
@@ -40,9 +40,6 @@ async def process_token(token):
 
 class SignupTask:
     def __init__(self, email=None, password=None, name=None):
-        if email is None or password is None:
-            raise TypeError("Missing data to signup")
-
         self.email = email
         self.password = password
         self.name = name
@@ -50,9 +47,6 @@ class SignupTask:
     async def perform(self):
         if not validate_email(self.email):
             raise ValueError("Wrong email")
-
-        if len(self.password) <= 4:
-            raise ValueError("Password must be more than 4 characters.")
 
         now = datetime.datetime.now()
         if not await User.objects.filter(email=self.email).count():
@@ -66,9 +60,6 @@ class SignupTask:
 
 class LoginTask:
     def __init__(self, email=None, password=None):
-        if email is None or password is None:
-            raise TypeError("Missing data to login")
-
         self.email = email
         self.password = password
 
@@ -96,6 +87,6 @@ class ValidateTask:
         if token_data['expired'] is True:
             raise ExpiredToken()
 
-        user = await User.objects.get(email=token_data['decoded_data']['email'])
+        user = await User.objects.get(id=token_data['decoded_data']['user_id'])
         return {'status': 'ok',
                 'data': {key: value for key, value in (await user.to_dict()).items() if key != 'password'}}

@@ -2,11 +2,11 @@ from aioelasticsearch.helpers import Scan
 from aioserver.utils import logger
 from aioserver.utils import json_response, get_domain, get_post_data, auth_ms, crawler_ms, es
 from async_orm.models import CrawlerStats
-from aioserver.api_schemas import SearchViewSchema
+from aioserver.api_schemas import SearchViewSchema, SignupViewSchema, LoginViewSchema, IndexViewSchema
 
 
 async def signup(request):
-    data = await get_post_data(request)
+    data = await get_post_data(request, SignupViewSchema)
     if data.get('status') == 'error':
         return await json_response(data, status=400)
 
@@ -16,7 +16,7 @@ async def signup(request):
 
 
 async def login(request):
-    data = await get_post_data(request)
+    data = await get_post_data(request, LoginViewSchema)
     if data.get('status') == 'error':
         return await json_response(data, status=400)
 
@@ -26,21 +26,16 @@ async def login(request):
 
 
 async def current_user(request):
-    logger.info(request['user']['email'])
+    logger.info(request['user']['user_id'])
     r = await auth_ms.make_request('validate', data={'token': request['user']['split_token']}, timeout=5)
     logger.error(r) if r['status'] != 'ok' else logger.info(r)
     return await json_response(r, status=200 if r['status'] == 'ok' else 400)
 
 
 async def index(request):
-    data = await get_post_data(request)
+    data = await get_post_data(request, IndexViewSchema)
     if data.get('status') == 'error':
         return await json_response(data, status=400)
-
-    if data.get('https') is None or data.get('domain') is None:
-        r = {'status': 'error', 'reason': 'Wrong data is given'}
-        logger.error(r)
-        return await json_response(r, status=400)
 
     data.update({'author_id': request['user']['user_id']})
     r = await crawler_ms.make_nowait_request('index', data)
@@ -49,7 +44,7 @@ async def index(request):
 
 
 async def stat(request):
-    logger.info(request['user']['email'])
+    logger.info(request['user']['user_id'])
     cs = await CrawlerStats.objects.filter(author_id=request['user']['user_id'])
     r = {'status': 'ok', 'data': [await i.to_dict() async for i in cs]}
     logger.info(r)
@@ -60,7 +55,7 @@ async def search(request):
     logger.info(request.query)
     try:
         schema = SearchViewSchema()
-        r = schema.dump({**request.query})
+        r = schema.load({**request.query})
         q, limit, offset = r['q'], r['limit'], r['offset']
     except Exception as e:
         r = {'status': 'bad_request', 'reason': str(e)}

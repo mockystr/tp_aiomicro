@@ -37,11 +37,15 @@ async def get_domain(url):
     return '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url))
 
 
-async def get_post_data(request):
+async def get_post_data(request, schema):
     try:
         data = await request.json()
         logger.info(data)
+        schema_obj = schema()
+        schema_obj.load(data=data)
         return data
     except json.decoder.JSONDecodeError as e:
         logger.error(str(e))
         return {'status': 'error', 'reason': 'Expected data in request'}
+    except Exception as e:
+        return {'status': 'error', 'reason': str(e)}
