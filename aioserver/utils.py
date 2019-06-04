@@ -35,3 +35,13 @@ def check_password(plain_text_password, hashed_password):
 
 async def get_domain(url):
     return '{uri.scheme}://{uri.netloc}/'.format(uri=urlparse(url))
+
+
+async def get_post_data(request):
+    try:
+        data = await request.json()
+        logger.info(data)
+        return data
+    except json.decoder.JSONDecodeError as e:
+        logger.error(str(e))
+        return {'status': 'error', 'reason': 'Expected data in request'}

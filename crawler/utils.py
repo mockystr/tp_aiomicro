@@ -2,9 +2,11 @@ import asyncio
 import aio_pika
 from project_utils import set_logger
 from project_config import rabbit_connection, crawler_queue_name
+from aioelasticsearch import Elasticsearch
 
 current_loop = asyncio.get_event_loop()
 logger = set_logger('crawler')
+es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
 
 async def set_connection(loop):

@@ -1,21 +1,25 @@
 from aioelasticsearch.helpers import Scan
 from aioserver.utils import logger
-from aioserver.utils import json_response, get_domain, auth_ms, crawler_ms, es
+from aioserver.utils import json_response, get_domain, get_post_data, auth_ms, crawler_ms, es
 from async_orm.models import CrawlerStats
 from aioserver.api_schemas import SearchViewSchema
 
 
 async def signup(request):
-    data = await request.json()
-    logger.info(data)
+    data = await get_post_data(request)
+    if data.get('status') == 'error':
+        return await json_response(data, status=400)
+
     r = await auth_ms.make_request(request_type='signup', data=data, timeout=5)
     logger.error(r) if r['status'] != 'ok' else logger.info(r)
     return await json_response(r, status=200 if r['status'] == 'ok' else 400)
 
 
 async def login(request):
-    data = await request.json()
-    logger.info(data)
+    data = await get_post_data(request)
+    if data.get('status') == 'error':
+        return await json_response(data, status=400)
+
     r = await auth_ms.make_request(request_type='login', data=data, timeout=5)
     logger.error(r) if r['status'] != 'ok' else logger.info(r)
     return await json_response(r, status=200 if r['status'] == 'ok' else 400)
@@ -29,8 +33,9 @@ async def current_user(request):
 
 
 async def index(request):
-    data = await request.json()
-    logger.info(data)
+    data = await get_post_data(request)
+    if data.get('status') == 'error':
+        return await json_response(data, status=400)
 
     if data.get('https') is None or data.get('domain') is None:
         r = {'status': 'error', 'reason': 'Wrong data is given'}

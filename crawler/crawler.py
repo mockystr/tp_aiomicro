@@ -4,8 +4,8 @@ import aiohttp
 import asyncpool
 from time import time
 from urllib.parse import urljoin, urlparse, urldefrag
-from aioelasticsearch import Elasticsearch
 from bs4 import BeautifulSoup
+from crawler.utils import es
 
 
 class Crawler:
@@ -58,45 +58,44 @@ class Crawler:
             return created
 
     async def main(self):
-        async with Elasticsearch([{'host': 'localhost', 'port': 9200}]) as es:
-            if not await self.initialize_index(es):
-                return
+        if not await self.initialize_index(es):
+            return
 
-            await self.links.put(self.start_url)
+        await self.links.put(self.start_url)
 
-            async with aiohttp.ClientSession() as session:
-                async with asyncpool.AsyncPool(self.loop, num_workers=10,
-                                               name="CrawlerPool", logger=logging.getLogger("CrawlerPool"),
-                                               worker_co=self.worker) as pool:
-                    t_begin = time()
-                    link = await self.links.get()
-                    await pool.push(link, es, session)
-                    self.time_statistic.append(time() - t_begin)
+        async with aiohttp.ClientSession() as session:
+            async with asyncpool.AsyncPool(self.loop, num_workers=10,
+                                           name="CrawlerPool", logger=logging.getLogger("CrawlerPool"),
+                                           worker_co=self.worker) as pool:
+                t_begin = time()
+                link = await self.links.get()
+                await pool.push(link, es, session)
+                self.time_statistic.append(time() - t_begin)
 
-                    while True:
-                        if self.stop_signal:
-                            break
+                while True:
+                    if self.stop_signal:
+                        break
 
-                        time_for_link = time()
-                        if not self.links.empty():
-                            link = await self.links.get()
-                        else:
-                            wait_time = time()
-                            while self.links.empty() and self.tmp_id < self.max_count:
-                                await asyncio.sleep(0.1)
+                    time_for_link = time()
+                    if not self.links.empty():
+                        link = await self.links.get()
+                    else:
+                        wait_time = time()
+                        while self.links.empty() and self.tmp_id < self.max_count:
+                            await asyncio.sleep(0.1)
 
-                                if time() - wait_time > 2:
-                                    print('break')
-                                    break
-
-                            if self.links.empty():
+                            if time() - wait_time > 2:
+                                print('break')
                                 break
 
-                            link = await self.links.get()
+                        if self.links.empty():
+                            break
 
-                        await asyncio.sleep(self.sleep_time)
-                        await pool.push(link=link, es=es, session=session)
-                        self.time_statistic.append(time() - time_for_link)
+                        link = await self.links.get()
+
+                    await asyncio.sleep(self.sleep_time)
+                    await pool.push(link=link, es=es, session=session)
+                    self.time_statistic.append(time() - time_for_link)
         return {'pages': self.tmp_id,
                 'avg_time_per_page': sum(self.time_statistic) / self.tmp_id,
                 'max_time_per_page': max(self.time_statistic),

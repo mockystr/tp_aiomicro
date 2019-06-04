@@ -33,7 +33,6 @@ async def index_consumer(message: IncomingMessage):
 
 async def main(loop):
     connection, channel, queue = await set_connection(loop)
-
     await queue.consume(index_consumer, no_ack=False)
 
 
