@@ -28,10 +28,10 @@ async def set_token(user):
 
 async def process_token(token):
     decoded_data = jwt.decode(token, sharable_secret)
-    token_obj = await Token.objects.get(token=token)
-
-    if token_obj.token != token:
-        raise ValueError("Wrong token is given")
+    # token_obj = await Token.objects.get(token=token)
+    #
+    # if token_obj.token != token:
+    #     raise ValueError("Wrong token is given")
 
     expire_obj = datetime.datetime.strptime(decoded_data['expire_date'], '%Y-%m-%d %H:%M:%S.%f')
 
@@ -84,8 +84,8 @@ class ValidateTask:
     async def perform(self):
         token_data = await process_token(self.token)
 
-        if token_data['expired'] is True:
-            raise ExpiredToken()
+        # if token_data['expired'] is True:
+        #     raise ExpiredToken()
 
         user = await User.objects.get(id=token_data['decoded_data']['user_id'])
         return {'status': 'ok',

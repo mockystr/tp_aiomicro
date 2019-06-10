@@ -1,0 +1,2 @@
+asyncpg==0.18.3
+psycopg2==2.8.2
