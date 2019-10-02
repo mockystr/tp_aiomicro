@@ -16,7 +16,7 @@ logger = set_logger('aioserver')
 dsn = "dbname={} user={} password={} host= {}".format('asynctest',
                                                       'emirnavruzov',
                                                       'qwe123',
-                                                      '127.0.0.1')
+                                                      'db')
 
 
 async def json_response(data, status=200):

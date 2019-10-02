@@ -4,7 +4,7 @@ TOKEN_EXPIRE_MINUTES = 30
 TIME_REFRESH_MINUTES = 0.1
 RPS = 100
 
-rabbit_connection = "amqp://guest:guest@127.0.0.1/"
+rabbit_connection = "amqp://guest:guest@rabbitmq/"
 inbound_name, outbound_name = "inbound", "outbound"
 crawler_queue_name = "crawler_inbound"
 

@@ -17,7 +17,7 @@ class User(Model):
         return '<User {}>'.format(self.email, self.name)
 
     class Meta:
-        table_name = 'user'
+        table_name = 'users'
         order_by = ('email',)
 
 
@@ -38,7 +38,7 @@ class Token(Model):
     expire_date = DateField()
 
     class Meta:
-        table_name = 'token'
+        table_name = 'tokens'
         order_by = ('user_id',)
 
 
