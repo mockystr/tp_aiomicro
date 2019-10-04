@@ -3,4 +3,4 @@
 /code/scripts/wait-for-it.sh db:5432
 /code/scripts/wait-for-it.sh rmq:5672
 
-python -m aioserver.server
+python -m aioauth.inbound

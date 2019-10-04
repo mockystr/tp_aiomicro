@@ -5,7 +5,7 @@ import asyncpool
 from time import time
 from urllib.parse import urljoin, urlparse, urldefrag
 from bs4 import BeautifulSoup
-from crawler.utils import es
+from crawler.utils import es, logger
 
 
 class Crawler:
@@ -85,7 +85,8 @@ class Crawler:
                             await asyncio.sleep(0.1)
 
                             if time() - wait_time > 2:
-                                print('break')
+                                logger.info(f'break at {self.start_url} after '
+                                            f'2 seconds waiting')
                                 break
 
                         if self.links.empty():
@@ -102,6 +103,7 @@ class Crawler:
                 'min_time_per_page': min(self.time_statistic)}
 
     async def worker(self, link, es, session):
+        logger.info(f'REQUESTING {link}')
         async with session.get(link, allow_redirects=False) as resp:
             if self.tmp_id >= self.max_count:
                 self.stop_signal = True
@@ -110,6 +112,7 @@ class Crawler:
             new_links, soup = await self.get_links(await resp.text())
             self.set_links.add(link)
             self.tmp_id += 1
+
             for n in new_links:
                 if n not in self.set_links:
                     await self.links.put(n)

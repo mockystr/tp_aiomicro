@@ -56,16 +56,16 @@ async def search(request):
     try:
         schema = SearchViewSchema()
         r = schema.load({**request.query})
-        q, limit, offset = r['q'], r['limit'], r['offset']
+        q, limit, offset = r['q'], r.get('limit', 100), r.get('offset', 0)
     except Exception as e:
         r = {'status': 'bad_request', 'reason': str(e)}
-        logger.info(r)
+        logger.error(r)
         return await json_response(r)
 
     body = {'query': {'match': {'text': q}}}
 
-    all_documents = ['{}://{}'.format('https' if i.https else 'http', i.domain) async for i in
-                     await CrawlerStats.objects.all()]
+    all_documents = ['{}://{}'.format('https' if i.https else 'http', i.domain)
+                     async for i in await CrawlerStats.objects.all()]
     index_names_docs = [''.join([i for i in ii
                                  if i not in ('[', '"', '*', '\\\\', '\\', '<', '|', ',', '>', '/', '?', ':')]) for ii
                         in all_documents]

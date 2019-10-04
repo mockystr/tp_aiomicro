@@ -1,16 +1,19 @@
 import json
-import logging
 import bcrypt
+
+from os import getenv
+
+from aioelasticsearch import Elasticsearch
 from aiohttp import web
 from urllib.parse import urlparse
+
 from aioauth.interface import AuthMS
 from crawler.interface import CrawlerMS
-from aioelasticsearch import Elasticsearch
 from project_utils import set_logger
 
 auth_ms = AuthMS()
 crawler_ms = CrawlerMS()
-es = Elasticsearch()
+es = Elasticsearch([{'host': getenv('HOST_ES', 'localhost'), 'port': 9200}])
 logger = set_logger('aioserver')
 
 dsn = "dbname={} user={} password={} host= {}".format('asynctest',

@@ -14,8 +14,8 @@ def validate_password_signup(password):
 
 class SearchViewSchema(Schema):
     q = fields.Str(required=True)
-    limit = fields.Integer(default=0, validate=validate_limit_search)
-    offset = fields.Integer(default=0)
+    limit = fields.Integer(default=0, validate=validate_limit_search, required=False)
+    offset = fields.Integer(default=0, required=False)
 
 
 class SignupViewSchema(Schema):

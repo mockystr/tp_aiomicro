@@ -1,10 +1,9 @@
 import asyncio
 import pickle
 from aio_pika import connect, IncomingMessage
-from crawler.utils import logger
 from project_config import RPS
 from crawler.crawler import Crawler
-from crawler.utils import collect_url, current_loop, set_connection
+from crawler.utils import collect_url, current_loop, set_connection, logger
 from async_orm.models import CrawlerStats
 
 
@@ -39,5 +38,5 @@ async def main(loop):
 if __name__ == "__main__":
     main_loop = asyncio.get_event_loop()
     main_loop.create_task(main(main_loop))
-    print("[*] Waiting for crawler messages. To exit press CTRL+C")
+    logger.info("[*] Waiting for crawler messages")
     main_loop.run_forever()
