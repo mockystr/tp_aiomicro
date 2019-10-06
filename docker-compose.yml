@@ -1,0 +1,89 @@
+version: '3.1'
+
+services:
+  base:
+    build:
+      context: .
+      dockerfile: ./docker/base.Dockerfile
+    image: docker_skill-base
+  async_orm:
+    build:
+      context: .
+      dockerfile: ./docker/async_orm.Dockerfile
+#    depends_on:
+#      - db
+#      - base
+  aioserver:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/aioserver.Dockerfile
+    ports:
+      - 12345:8080
+#    depends_on:
+#      - rmq
+#      - async_orm
+  aioauth:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/aioauth.Dockerfile
+#    depends_on:
+#      - rmq
+#      - async_orm
+#      - aioserver
+  crawler:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./docker/crawler.Dockerfile
+#    depends_on:
+#      - rmq
+#      - es
+#      - async_orm
+#      - aioserver
+
+
+#  Queues
+  rmq:
+    image: rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+      # как это работает? мои сервисы обращаются черзе внешний порт который я слева указываю?
+      # или можно не указывать вообще эти порты???????
+
+
+#  Databases
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: emirnavruzov
+      POSTGRES_PASSWORD: qwe123
+      POSTGRES_DB: tp_aiomicro
+  es:
+    image: elasticsearch:7.0.0
+    environment:
+      - node.name=es01
+      - cluster.initial_master_nodes=es01
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9200:9200
+
+
+
+# правильно ли я задал переменные окружения в базовом файле докера?
+# или надо для каждого сервиса в компоузе писать отдельно
+
+
+# когда я называл сервисы rabbitmq и elasticsearch и создавал перменные окружения
+# ENV HOST_RABBIMQ=rabbitmq то почему-то при попытке в контейнере найти переменную окружения
+# вместо получения строки он пытался ее выполнить зачем-то
+# как это исправить правильно? я просто перемеиновал сервисы, чтоб они не совспадали с командами
