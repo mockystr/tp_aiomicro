@@ -1,5 +1,7 @@
+docker-compose up
+
+or
+
 python -m aioserver.server
 python -m aioauth.inbound
 python -m crawler.main
-
-python -m async_orm.main
