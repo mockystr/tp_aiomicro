@@ -1,7 +1,7 @@
 import asyncio
 import pickle
-from aio_pika import connect, IncomingMessage
-from project_config import RPS
+from aio_pika import IncomingMessage
+from settings import RPS
 from crawler.crawler import Crawler
 from crawler.utils import collect_url, current_loop, set_connection, logger
 from async_orm.models import CrawlerStats

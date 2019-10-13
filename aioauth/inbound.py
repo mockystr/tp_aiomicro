@@ -2,7 +2,7 @@ import asyncio
 import pickle
 import aio_pika
 
-from project_config import rabbit_connection
+from settings import rabbit_connection
 from aioauth.utils import inbound_name, outbound_name, aioauth_logger
 from aioauth.tasks import LoginTask, SignupTask, ValidateTask
 

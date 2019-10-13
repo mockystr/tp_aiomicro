@@ -1,0 +1,14 @@
+node_modules
+env
+venv
+.env
+.venv
+media
+conf
+build
+assets
+.git*
+front
+.vscode
+.idea
+.kube

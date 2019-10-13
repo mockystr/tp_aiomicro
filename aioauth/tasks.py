@@ -5,8 +5,8 @@ from async_orm.models import User
 from aioserver.utils import get_hashed_password
 from aioauth.utils import check_password, get_hashed_password
 from async_orm.models import Token
-from project_config import TOKEN_EXPIRE_MINUTES, sharable_secret
-from aioserver.exceptions import UserExists, ExpiredToken
+from settings import TOKEN_EXPIRE_MINUTES, sharable_secret
+from aioserver.exceptions import UserExists
 from async_orm.exceptions import DoesNotExist
 
 

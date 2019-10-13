@@ -1,8 +1,8 @@
 import asyncio
 import aio_pika
 import bcrypt
-from project_config import rabbit_connection, inbound_name, outbound_name
-from project_utils import set_logger
+from settings import rabbit_connection, inbound_name, outbound_name
+from settings import set_logger
 
 current_loop = asyncio.get_event_loop()
 aioauth_logger = set_logger('aioauth')

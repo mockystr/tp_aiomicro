@@ -3,8 +3,8 @@ import aio_pika
 
 from os import getenv
 
-from project_utils import set_logger
-from project_config import rabbit_connection, crawler_queue_name
+from settings import set_logger
+from settings import rabbit_connection, crawler_queue_name
 
 from aioelasticsearch import Elasticsearch
 

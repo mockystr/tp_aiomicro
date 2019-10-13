@@ -3,9 +3,9 @@ import datetime
 import pickle
 import uuid
 import aio_pika
-from project_config import crawler_queue_name
+from settings import crawler_queue_name
 from crawler.utils import current_loop, set_connection
-from project_config import TIME_REFRESH_MINUTES
+from settings import TIME_REFRESH_MINUTES
 from async_orm.models import CrawlerStats
 from async_orm.exceptions import DoesNotExist
 

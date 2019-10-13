@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 from aioauth.interface import AuthMS
 from crawler.interface import CrawlerMS
-from project_utils import set_logger
+from settings import set_logger
 
 auth_ms = AuthMS()
 crawler_ms = CrawlerMS()
