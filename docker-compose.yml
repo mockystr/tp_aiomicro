@@ -5,44 +5,32 @@ services:
     build:
       context: .
       dockerfile: ./docker/base.Dockerfile
-    image: docker_skill-base
+    image: mockystr/docker-tp-aiomicro-base
   async_orm:
     build:
       context: .
       dockerfile: ./docker/async_orm.Dockerfile
-#    depends_on:
-#      - db
-#      - base
+    image: mockystr/docker-tp-aiomicro-orm
   aioserver:
     restart: always
     build:
       context: .
       dockerfile: ./docker/aioserver.Dockerfile
+    image: mockystr/docker-tp-aiomicro-aioserver
     ports:
       - 12345:8080
-#    depends_on:
-#      - rmq
-#      - async_orm
   aioauth:
     restart: always
     build:
       context: .
       dockerfile: ./docker/aioauth.Dockerfile
-#    depends_on:
-#      - rmq
-#      - async_orm
-#      - aioserver
+    image: mockystr/docker-tp-aiomicro-auth
   crawler:
     restart: always
     build:
       context: .
       dockerfile: ./docker/crawler.Dockerfile
-#    depends_on:
-#      - rmq
-#      - es
-#      - async_orm
-#      - aioserver
-
+    image: mockystr/docker-tp-aiomicro-crawler
 
 #  Queues
   rmq:
@@ -50,9 +38,6 @@ services:
     ports:
       - 15672:15672
       - 5672:5672
-      # как это работает? мои сервисы обращаются черзе внешний порт который я слева указываю?
-      # или можно не указывать вообще эти порты???????
-
 
 #  Databases
   db:
@@ -77,10 +62,6 @@ services:
     ports:
       - 9200:9200
 
-
-
-# правильно ли я задал переменные окружения в базовом файле докера?
-# или надо для каждого сервиса в компоузе писать отдельно
 
 
 # когда я называл сервисы rabbitmq и elasticsearch и создавал перменные окружения

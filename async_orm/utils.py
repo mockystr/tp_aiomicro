@@ -11,6 +11,10 @@ current_loop = asyncio.get_event_loop()
 
 
 async def create_conn_cur():
+    print(user_db_constant,
+          password_db_constant,
+          host_db_constant,
+          database_db_constant)
     return await asyncpg.create_pool(user=user_db_constant,
                                      password=password_db_constant,
                                      host=host_db_constant,
