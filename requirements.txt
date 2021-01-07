@@ -13,7 +13,7 @@ cffi==1.12.3
 chardet==3.0.4
 elasticsearch==6.3.1
 idna==2.8
-lxml==4.3.3
+lxml==4.6.2
 marshmallow==3.0.0rc6
 multidict==4.5.2
 pamqp==2.3.0
