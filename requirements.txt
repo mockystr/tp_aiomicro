@@ -1,6 +1,6 @@
 aio-pika==5.5.3
 aioelasticsearch==0.5.2
-aiohttp==3.5.4
+aiohttp==3.7.4
 aiohttp-jwt==0.4.0
 aiormq==2.5.3
 async-timeout==3.0.1
